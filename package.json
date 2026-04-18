@@ -1,0 +1,29 @@
+{
+  "name": "axpesa",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web && npm run build --workspace=apps/backend",
+    "setup": "npm install && npm run db:migrate",
+    "db:migrate": "npm run db:migrate --workspace=apps/backend",
+    "db:generate": "npm run db:generate --workspace=apps/backend",
+    "contracts:install": "npm install --workspace=apps/contracts",
+    "contracts:compile": "npm run compile --workspace=apps/contracts",
+    "contracts:test": "npm run test --workspace=apps/contracts",
+    "contracts:deploy": "npm run deploy:testnet --workspace=apps/contracts",
+    "build:contracts": "npm run compile --workspace=apps/contracts",
+    "test:contracts": "npm run test --workspace=apps/contracts",
+    "deploy:contracts": "npm run deploy:testnet --workspace=apps/contracts"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  }
+}

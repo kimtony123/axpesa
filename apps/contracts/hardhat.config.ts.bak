@@ -1,0 +1,64 @@
+import type { HardhatUserConfig } from "hardhat/config";
+
+const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || 
+                   process.env.HOT_WALLET_PRIVATE_KEY || 
+                   "0x0000000000000000000000000000000000000000000000000000000000000000";
+
+const config: HardhatUserConfig = {
+  solidity: {
+    version: "0.8.28",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
+  defaultNetwork: "hardhat",
+  networks: {
+    hardhat: {
+      chainId: 31337
+    },
+    confluxESpaceLocal: {
+      url: "http://localhost:8545",
+      chainId: 2030,
+      accounts: [PRIVATE_KEY]
+    },
+    confluxESpaceTestnet: {
+      url: "https://evmtestnet.confluxrpc.com",
+      chainId: 71,
+      accounts: [PRIVATE_KEY]
+    },
+    confluxESpace: {
+      url: "https://evm.confluxrpc.com",
+      chainId: 1030,
+      accounts: [PRIVATE_KEY]
+    }
+  },
+  etherscan: {
+    apiKey: {
+      confluxESpaceTestnet: "verify",
+      confluxESpace: "verify"
+    },
+    customChains: [
+      {
+        network: "confluxESpace",
+        chainId: 1030,
+        urls: {
+          apiURL: "https://evmapi.confluxscan.org/api",
+          browserURL: "https://evm.confluxscan.org/"
+        }
+      },
+      {
+        network: "confluxESpaceTestnet",
+        chainId: 71,
+        urls: {
+          apiURL: "https://evmapi-testnet.confluxscan.org/api",
+          browserURL: "https://evmtestnet.confluxscan.org/"
+        }
+      }
+    ]
+  }
+};
+
+export default config;

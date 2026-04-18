@@ -1,969 +1,675 @@
-# 🇰🇪 AxPesa
+# AxPesa - African Finance, Evolved
 
-> Seamless fiat-to-stablecoin onboarding for Conflux Network — cards, M-PESA, and mobile money
+> Your Money, Multiple Options. Expand beyond USD.
 
-AxPesa is a frictionless onramp that lets users buy AxCNH (offshore Chinese yuan stablecoin on Conflux) using their preferred payment method — credit/debit cards, M-PESA, Airtel Money, or bank transfers. Available as a Next.js website and React Native mobile app.
-
----
-
-## 📋 Table of Contents
-
-- [Problem Statement](#problem-statement)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [Payment Flow](#payment-flow)
-- [API Reference](#api-reference)
-- [Next.js Frontend](#nextjs-frontend)
-- [React Native Mobile App](#react-native-mobile-app)
-- [Conflux Integration](#conflux-integration)
-- [Security](#security)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Demo](#demo)
-- [License](#license)
+License: MIT
 
 ---
 
-## 🎯 Problem Statement
+## Overview
 
-African and emerging market users face significant barriers to accessing stablecoins:
+AxPesa is a fintech platform enabling Africans to access global currencies through an intuitive platform built on Conflux eSpace blockchain.
 
-| Barrier             | Description                                               |
-| ------------------- | --------------------------------------------------------- |
-| **No bank cards**   | 60%+ of Africans lack credit/debit cards                  |
-| **High fees**       | Traditional onramps charge 5-10% + hidden spreads         |
-| **Slow settlement** | Bank transfers take 2-5 days                              |
-| **Complex UX**      | Wallet creation, seed phrases, gas fees confuse new users |
-| **Limited options** | Most onramps don't support mobile money                   |
+**The Problem:** Africans deserve more currency options than just USD. Current solutions limit users to single currencies, making international trade and savings difficult. Most people can't easily access Chinese Yuan (CNY) or diversify their holdings.
 
-**AxPesa solves this** by integrating Flutterwave — a single API that supports 15+ payment methods across Africa and emerging markets.
+**Our Solution:** AxPesa expands your currency options by providing:
+
+- **Buy/Sell** CNY stablecoins with M-PESA, cards, or bank transfer
+- **Send** to friends instantly via email, phone, or wallet address
+- **Save** in CNY to diversify your currency holdings
+- **Earn** staking rewards on your holdings
+- **For Merchants** - Accept payments with QR codes and payment links
+- **Social Login** - No crypto knowledge required
+
+--- |
+
+## 👥 Team
+
+| Name           | Role | GitHub         | Discord         |
+| -------------- | ---- | -------------- | --------------- |
+| Anthony Kimani | CTO  | @anthonykimani | tonykim8450     |
+| Moses Epale    | COO  | @mosesepale    | mosesepale#1234 |
+
+---
+
+## 🚀 Problem Statement
+
+### The Challenge
+
+Africans deserve more currency options than just USD:
+
+1. **Limited Options**: Most solutions only offer USD. Why should you be restricted to one currency?
+2. **Currency Barriers**: International trade requires multiple currencies, but access is difficult
+3. **Complexity**: Existing crypto solutions require technical knowledge and are hard to use
+4. **Expensive**: Traditional forex and remittance services charge high fees
+
+### Who's Affected
+
+- **Everyone** - Anyone who wants to diversify their savings
+- **Freelancers** - Receiving payments from international clients
+- **Business owners** - Paying suppliers in different countries
+- **Families** - Receiving remittances from abroad
+
+### How Blockchain Helps
+
+- **Stablecoins** provide easy access to multiple currencies without custody risks
+- **Smart contracts** automate settlements and ensure transparency
+- **Conflux eSpace** offers fast, low-cost transactions suitable for micropayments
+
+---
+
+## 💡 Solution
+
+### Our Approach
+
+AxPesa expands your currency options through a simple, accessible platform. No more being restricted to just USD.
+
+### Core Features
+
+| Feature | Description |
+|---------|-------------|
+| **Buy AxCNH** | Purchase Chinese Yuan stablecoins with M-PESA, cards, or bank transfer |
+| **Sell AxCNH** | Convert AxCNH back to KES, UGX, NGN with instant settlement |
+| **Send AxCNH** | Transfer to friends by email, phone, or wallet address |
+| **Dashboard** | Track balances, transactions, and treasury holdings |
+| **Staking** | Earn rewards via Conflux DeFi protocols (1% platform fee) |
+| **Merchant Portal** | QR codes and payment links for businesses |
+| **Mobile App** | React Native iOS/Android apps |
+
+### Go-to-Market Plan
+
+1. **Phase 1**: Target Kenyan traders and M-PESA users
+2. **Phase 2**: Expand to Uganda, Nigeria, Tanzania
+3. **Phase 3**: Add more fiat on/off ramps and currencies
+
+### Benefits
+
+- **No crypto knowledge required** - Social login with Google/Twitter
+- **Instant settlements** - Transactions confirmed in seconds
+- **Low fees** - Built on Conflux eSpace for minimal costs
+- **Secure** - Multi-sig vault with 2-of-3 admin signatures
+- **Multiple options** - Beyond just USD
+
+---
+
+## ⚡ Conflux Integration
+
+### How We Use Conflux
+
+| Feature            | Implementation                                     |
+| ------------------ | -------------------------------------------------- |
+| **eSpace**         | Smart contracts deployed on Conflux eSpace Testnet |
+| **Token Standard** | ERC-20 stablecoins (AxCNH for CNY)                 |
+| **RPC Endpoint**   | `https://evmtestnet.confluxrpc.com`                |
+| **Block Explorer** | `https://evmtestnet.confluxscan.io`                |
+| **Chain ID**       | `0x47` (71 decimal)                                |
+
+### Why Conflux?
+
+- **Speed**: Sub-second transaction finality
+- **Low Cost**: Minimal gas fees for micropayments
+- **Compatibility**: EVM-compatible for easy Solidity development
+- **Scalability**: Built for high throughput
 
 ---
 
 ## ✨ Features
 
-### Core Features (MVP)
+### Core Features (All Live)
 
-| Feature                  | Status | Description                               |
-| ------------------------ | ------ | ----------------------------------------- |
-| **Card payments**        | ✅     | Visa, Mastercard, Amex (global)           |
-| **M-PESA**               | ✅     | Kenya, Tanzania, Uganda, Rwanda, DRC      |
-| **Airtel Money**         | ✅     | Kenya, Uganda, Malawi, Zambia, Chad       |
-| **Bank transfers**       | ✅     | Direct bank debit (NG, KE, UG, ZA, GH)    |
-| **Mobile money**         | ✅     | MTN MoMo, Orange Money, Vodafone Cash     |
-| **Auto-wallet creation** | ✅     | Conflux wallet generated if user has none |
-| **AxCNH delivery**       | ✅     | Stablecoin sent within 60 seconds         |
-| **Transaction tracking** | ✅     | Real-time status via webhook              |
-| **SMS notifications**    | ✅     | Payment confirmation via SMS              |
-| **Next.js website**      | ✅     | Fast, SEO-friendly web app                |
-| **React Native APK**     | ✅     | Mobile app for Android/iOS                |
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **Social Login** | ✅ Live | Google, Twitter, Discord, GitHub, LinkedIn - no wallet needed |
+| **Buy AxCNH** | ✅ Live | M-PESA, cards, bank transfer |
+| **Sell AxCNH** | ✅ Live | Convert to KES, UGX, NGN |
+| **Send AxCNH** | ✅ Live | P2P transfers via email/phone/address |
+| **Dashboard** | ✅ Live | View balances and transactions |
+| **Staking** | ✅ Live | Earn rewards via Conflux DeFi (1% platform fee) |
+| **Merchant Portal** | ✅ Live | QR codes and payment links for businesses |
+| **Mobile App** | ✅ Live | React Native iOS/Android apps |
 
-### Post-MVP Features
+> ⚠️ **Important Notes:**
+> - **Staking**: Yield is generated by third-party Conflux DeFi protocols. AxPesa charges a 1% platform fee. Users should understand the risks of DeFi protocols.
+> - **CFX for Gas**: Users need a small amount of CFX for transaction fees. New users receive CFX from our faucet.
 
-| Feature                     | Status                               |
-| --------------------------- | ------------------------------------ |
-| **Off-ramp (AxCNH → Fiat)** | 🚧 Planned                           |
-| **Recurring purchases**     | 🚧 Planned                           |
-| **B2B API**                 | 🚧 Planned                           |
-| **Multi-language support**  | 🚧 Planned (Swahili, French, Arabic) |
-| **Biometric auth**          | 🚧 Planned                           |
-| **Price alerts**            | 🚧 Planned                           |
+### Platform Compatibility
+
+| Platform             | Status  | Description             |
+| -------------------- | ------- | ----------------------- |
+| **Web**              | ✅ Live | Next.js web application |
+| **Mobile (Android)** | ✅ Live | React Native with Expo  |
+| **Mobile (iOS)**     | ✅ Live | React Native            |
+
+### Smart Contracts (Infrastructure)
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **AxCNH Token** | ✅ Deployed | External ERC-20 stablecoin pegged to CNY (like USDT) |
+| **AxPesaTreasury** | ✅ Deployed | AxPesa's settlement wallet for buy/sell operations |
+| **Multi-sig** | ✅ Implemented | 2-of-3 admin signatures for treasury security |
+
+### Future Enhancements (Roadmap)
+
+- **Gasless Transactions** - SponsorPaymaster for zero-fee user experience
+- **Cross-Space Bridge** - Connect with Conflux Core Space for staking integration
+- **More Currencies** - Add more stablecoin options
+- **Expanded Fiat** - Add more African currencies
+
+---
+
+## 🛠️ Technology Stack
+
+### Frontend
+
+| Layer     | Technology              |
+| --------- | ----------------------- |
+| Framework | Next.js 14              |
+| Language  | TypeScript              |
+| Styling   | Tailwind CSS            |
+| State     | Zustand                 |
+| Auth      | Web3Auth (Social Login) |
+| Web3      | viem, @web3auth/modal   |
+| Animation | Framer Motion           |
+| Icons     | Lucide React            |
+
+### Backend
+
+| Layer     | Technology                  |
+| --------- | --------------------------- |
+| Runtime   | Node.js                     |
+| Framework | Express.js                  |
+| Language  | TypeScript                  |
+| Database  | PostgreSQL (Prisma ORM)     |
+| Auth      | JWT + Web3Auth verification |
+| Payments  | Flutterwave (M-PESA API)    |
+
+### Blockchain
+
+| Layer     | Technology             |
+| --------- | ---------------------- |
+| Network   | Conflux eSpace         |
+| Contracts | Solidity 0.8.28        |
+| Framework | Hardhat                |
+| Testing   | Mocha + Chai           |
+| Libraries | OpenZeppelin Contracts |
+
+### Infrastructure
+
+| Layer   | Technology                                  |
+| ------- | ------------------------------------------- |
+| Hosting | Vercel (Frontend), Railway/Render (Backend) |
+| Mobile  | React Native + Expo                         |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         USER FLOW                                   │
-│                                                                      │
-│  1. User visits axpesa.com (Next.js) or opens mobile app (RN)       │
-│  2. Enters Conflux wallet address (or auto-create)                  │
-│  3. Selects amount (e.g., 1000 KES)                                 │
-│  4. Chooses payment method (M-PESA / Card / Bank)                   │
-│  5. Completes payment on Flutterwave hosted page                    │
-│  6. Receives AxCNH in wallet within 60 seconds                      │
-└─────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────┐
-│                        TECHNICAL ARCHITECTURE                        │
-│                                                                      │
-│  ┌─────────────────┐     ┌─────────────────┐                       │
-│  │  Next.js Web    │     │  React Native   │                       │
-│  │  (Vercel/Railway)│     │  Mobile App     │                       │
-│  └────────┬────────┘     └────────┬────────┘                       │
-│           │                        │                                 │
-│           └────────────┬───────────┘                                 │
-│                        ▼                                             │
-│           ┌─────────────────────────┐                               │
-│           │   Node.js Backend       │                               │
-│           │   (Express/NestJS)      │                               │
-│           │   • API Routes          │                               │
-│           │   • Webhook handler     │                               │
-│           │   • Rate limiting       │                               │
-│           │   • Transaction queue   │                               │
-│           └────────────┬────────────┘                               │
-│                        │                                             │
-│         ┌──────────────┼──────────────┐                             │
-│         ▼              ▼              ▼                             │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐           │
-│  │ PostgreSQL  │ │    Redis    │ │   Flutterwave API   │           │
-│  │ (Tx store)  │ │ (Queue/     │ │  • Card Processing  │           │
-│  │ (User data) │ │  Rate limit)│ │  • M-PESA Collection│           │
-│  └─────────────┘ └─────────────┘ │  • Bank Transfers   │           │
-│                                   │  • Mobile Money     │           │
-│                                   └──────────┬──────────┘           │
-│                                              │                       │
-│                                              ▼                       │
-│                                   ┌─────────────────────┐           │
-│                                   │  Payment Webhook    │           │
-│                                   │  → Backend /webhook │           │
-│                                   └──────────┬──────────┘           │
-│                                              │                       │
-│                                              ▼                       │
-│                                   ┌─────────────────────┐           │
-│                                   │   Conflux Network   │           │
-│                                   │  • Swappi DEX       │           │
-│                                   │  • AxCNH transfer   │           │
-│                                   └─────────────────────┘           │
-└─────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                           USER INTERFACE                                │
+│                    (Next.js Web + React Native Mobile)                  │
+│         Social Login │ Buy/Sell │ Send │ Dashboard │ Staking          │
+└─────────────────────────────┬──────────────────────────────────────────┘
+                              │
+                              ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                          BACKEND API                                    │
+│                  (Express + Prisma + TypeScript)                        │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────────────────┐ │
+│  │   Auth   │  │  Onramp  │  │ Offramp  │  │     Transfer Service    │ │
+│  │ Web3Auth │  │ Flutter- │  │ Flutter- │  │  P2P wallet transfers    │ │
+│  │   JWT    │  │  wave    │  │  wave    │  │  Email/Phone lookup      │ │
+│  └──────────┘  └──────────┘  └──────────┘  └─────────────────────────┘ │
+│  ┌──────────┐  ┌──────────┐  ┌─────────────────────────────────────────┐ │
+│  │  Staking │  │ Merchant │  │           Merchant Portal                 │ │
+│  │ Rewards  │  │  QR/URL  │  │        QR Codes & Payment Links          │ │
+│  └──────────┘  └──────────┘  └─────────────────────────────────────────┘ │
+└─────────────────────────────┬──────────────────────────────────────────┘
+                              │
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+┌─────────────────────────┐       ┌─────────────────────────┐
+│    FLUTTERWAVE API      │       │   CONFLUX eSPACE        │
+│   (M-PESA Integration)   │       │  (Smart Contracts)      │
+│  Payment Processing      │       │  ┌───────────────────┐  │
+│  KES/UGX/NGN Settlements│       │  │     AxCNH Token    │  │
+└─────────────────────────┘       │  │  (External Stable) │  │
+                                  │  ├───────────────────┤  │
+                                  │  │   AxPesaVault     │  │
+                                  │  │  (90/10 Liquidity)│  │
+                                  │  └───────────────────┘  │
+                                  └─────────────────────────┘
 ```
+
+### Data Flow
+
+**Buy Flow (On-ramp):**
+
+1. User selects token and payment method
+2. Backend creates Flutterwave payment with idempotency key
+3. User completes M-PESA/Card payment
+4. Backend receives webhook and **verifies payment with Flutterwave API**
+5. AxPesaTreasury sends AxCNH to user's wallet
+6. Reconciliation job runs every 30 mins to catch dropped webhooks
+
+**Sell Flow (Off-ramp):**
+
+1. User transfers AxCNH to AxPesaTreasury (on-chain)
+2. Backend monitors for transfer confirmation
+3. Backend initiates Flutterwave payout (M-PESA)
+4. User receives KES directly to mobile money
+
+**Transfer Flow (P2P):**
+
+1. User enters recipient (email/phone/address)
+2. Backend looks up recipient's hashed wallet
+3. Backend executes on-chain transfer
+4. Both parties see transaction confirmed
 
 ---
 
-## 💻 Tech Stack
+## 📋 Prerequisites
 
-| Layer                | Technology                                      |
-| -------------------- | ----------------------------------------------- |
-| **Frontend (Web)**   | Next.js 14 + TypeScript + TailwindCSS           |
-| **Mobile App**       | React Native 0.72+ + Expo                       |
-| **Backend**          | Node.js + Express.js (or NestJS)                |
-| **Payments**         | Flutterwave Node.js SDK                         |
-| **Blockchain**       | ethers.js v6 + Conflux eSpace                   |
-| **Database**         | PostgreSQL + Prisma ORM                         |
-| **Cache/Queue**      | Redis + BullMQ                                  |
-| **SMS**              | Twilio / Africa's Talking                       |
-| **Validation**       | Zod + React Hook Form                           |
-| **State Management** | Zustand (web) + Redux Toolkit (mobile)          |
-| **Deployment**       | Vercel (web) + Railway (backend) + EAS (mobile) |
+Before you begin, ensure you have the following installed:
+
+| Requirement | Version | Notes                 |
+| ----------- | ------- | --------------------- |
+| Node.js     | 18.0.0+ | LTS recommended       |
+| npm         | 9.0.0+  | Comes with Node       |
+| Git         | 2.0+    | For cloning           |
+| PostgreSQL  | 14+     | Or use SQLite for dev |
 
 ---
 
-## 📁 Project Structure
+## 🚀 Installation & Setup
 
-```
-axpesa/
-├── apps/
-│   ├── web/                          # Next.js website
-│   │   ├── src/
-│   │   │   ├── app/                  # App router
-│   │   │   │   ├── page.tsx          # Landing page
-│   │   │   │   ├── buy/
-│   │   │   │   │   └── page.tsx      # Buy flow
-│   │   │   │   ├── status/
-│   │   │   │   │   └── [txId]/
-│   │   │   │   │       └── page.tsx  # Transaction status
-│   │   │   │   └── api/
-│   │   │   │       └── webhook/      # Webhook endpoint
-│   │   │   ├── components/
-│   │   │   │   ├── onramp/
-│   │   │   │   │   ├── AmountInput.tsx
-│   │   │   │   │   ├── WalletInput.tsx
-│   │   │   │   │   ├── PaymentMethods.tsx
-│   │   │   │   │   └── RateDisplay.tsx
-│   │   │   │   ├── layout/
-│   │   │   │   │   ├── Header.tsx
-│   │   │   │   │   └── Footer.tsx
-│   │   │   │   └── ui/               # shadcn/ui components
-│   │   │   ├── hooks/
-│   │   │   │   ├── usePayment.ts
-│   │   │   │   └── useRate.ts
-│   │   │   ├── lib/
-│   │   │   │   ├── conflux.ts
-│   │   │   │   └── flutterwave.ts
-│   │   │   └── types/
-│   │   ├── public/
-│   │   ├── package.json
-│   │   └── next.config.js
-│   │
-│   ├── mobile/                       # React Native app
-│   │   ├── src/
-│   │   │   ├── screens/
-│   │   │   │   ├── HomeScreen.tsx
-│   │   │   │   ├── BuyScreen.tsx
-│   │   │   │   ├── StatusScreen.tsx
-│   │   │   │   └── WalletScreen.tsx
-│   │   │   ├── components/
-│   │   │   │   ├── AmountInput.tsx
-│   │   │   │   ├── PaymentMethodCard.tsx
-│   │   │   │   └── TransactionCard.tsx
-│   │   │   ├── hooks/
-│   │   │   │   ├── usePayment.ts
-│   │   │   │   └── useConflux.ts
-│   │   │   ├── services/
-│   │   │   │   ├── api.ts
-│   │   │   │   └── storage.ts
-│   │   │   └── utils/
-│   │   │       └── validation.ts
-│   │   ├── App.tsx
-│   │   ├── package.json
-│   │   └── app.json                 # Expo config
-│   │
-│   └── backend/                      # Node.js API server
-│       ├── src/
-│       │   ├── controllers/
-│       │   │   ├── paymentController.ts
-│       │   │   ├── webhookController.ts
-│       │   │   └── statusController.ts
-│       │   ├── services/
-│       │   │   ├── flutterwaveService.ts
-│       │   │   ├── confluxService.ts
-│       │   │   ├── transactionService.ts
-│       │   │   └── smsService.ts
-│       │   ├── middleware/
-│       │   │   ├── auth.ts
-│       │   │   ├── rateLimit.ts
-│       │   │   └── validate.ts
-│       │   ├── queues/
-│       │   │   └── transactionQueue.ts
-│       │   ├── models/
-│       │   │   └── prisma.schema
-│       │   ├── utils/
-│       │   │   ├── logger.ts
-│       │   │   └── crypto.ts
-│       │   └── index.ts
-│       ├── package.json
-│       ├── tsconfig.json
-│       └── prisma/
-│           └── schema.prisma
-│
-├── docker/
-│   ├── Dockerfile.backend
-│   └── docker-compose.yml
-├── docs/
-│   ├── go_to_market_plan.md
-│   └── technical_docs.md
-├── demo/
-│   ├── demo_video.mp4
-│   ├── intro_video.mp4
-│   └── screenshots/
-├── .env.example
-├── Makefile
-└── README.md
-```
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 18+
-- PostgreSQL 14+
-- Redis 7+
-- Flutterwave merchant account ([sign up](https://flutterwave.com))
-- Conflux eSpace RPC endpoint
-- (Optional) Twilio account for SMS
-
-### Installation
+### 1. Clone the Repository
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/axpesa.git
+git clone https://github.com/your-username/axpesa.git
 cd axpesa
-
-# Install all dependencies
-npm run setup:all
-# or individually:
-cd apps/backend && npm install
-cd ../web && npm install
-cd ../mobile && npm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys
-
-# Set up database
-cd apps/backend
-npx prisma migrate dev --name init
-npx prisma generate
-
-# Start development servers
-# Terminal 1: Backend
-cd apps/backend && npm run dev
-
-# Terminal 2: Web (Next.js)
-cd apps/web && npm run dev
-
-# Terminal 3: Mobile (Expo)
-cd apps/mobile && npm run ios  # or android
 ```
 
----
+### 2. Install Dependencies
 
-## ⚙️ Configuration
+```bash
+# Install all workspace dependencies
+npm install
+```
 
-### .env (Root)
+### 3. Environment Configuration
+
+```bash
+# Copy example files
+cp apps/web/.env.example apps/web/.env.local
+cp apps/backend/.env.example apps/backend/.env
+```
+
+#### Frontend (.env.local)
 
 ```env
-# ========== FLUTTERWAVE ==========
+# Web3Auth
+NEXT_PUBLIC_WEB3AUTH_CLIENT_ID=your_client_id
+
+# Conflux eSpace Testnet
+NEXT_PUBLIC_CHAIN_ID=0x47
+NEXT_PUBLIC_RPC_URL=https://evmtestnet.confluxrpc.com
+
+# Contract Addresses
+NEXT_PUBLIC_AXCNH_CONTRACT_ADDRESS=0xD41Ca697EEF60fE35f9e92441A180915D6465516
+NEXT_PUBLIC_AXCNH_VAULT_ADDRESS=0xCFC0aA7Afab6d6a617D6CB5213bf9f206604bcF6
+
+# API
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
+
+#### Backend (.env)
+
+```env
+# Flutterwave
 FLUTTERWAVE_PUBLIC_KEY=FLWPUBK-xxx
 FLUTTERWAVE_SECRET_KEY=FLWSECK-xxx
-FLUTTERWAY_ENCRYPTION_KEY=xxx
 FLUTTERWAVE_WEBHOOK_SECRET=xxx
 
-# ========== CONFLUX ==========
-CONFLUX_RPC_URL=https://evm.confluxrpc.com
+# Conflux
+CONFLUX_RPC_URL=https://evmtestnet.confluxrpc.com
 CONFLUX_CHAIN_ID=71
 HOT_WALLET_PRIVATE_KEY=0x...
-AXCNH_CONTRACT_ADDRESS=0x...
-SWAPPI_ROUTER_ADDRESS=0x...
 
-# ========== DATABASE ==========
-DATABASE_URL=postgresql://user:pass@localhost:5432/axpesa
+# Web3Auth
+WEB3AUTH_CLIENT_ID=your_client_id
+WEB3AUTH_CLIENT_SECRET=your_secret
 
-# ========== REDIS ==========
-REDIS_URL=redis://localhost:6379
+# Database
+DATABASE_URL="file:./dev.db"
 
-# ========== SMS (Twilio) ==========
-TWILIO_ACCOUNT_SID=ACxxx
-TWILIO_AUTH_TOKEN=xxx
-TWILIO_PHONE_NUMBER=+1234567890
-
-# ========== APP ==========
-NEXTAUTH_SECRET=xxx
-NEXTAUTH_URL=http://localhost:3000
-API_URL=http://localhost:8080
-NODE_ENV=development
+# JWT
+JWT_SECRET=your-super-secret-jwt-key
 ```
 
-### Prisma Schema
-
-```prisma
-// apps/backend/prisma/schema.prisma
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model Transaction {
-  id              String   @id @default(cuid())
-  transactionId   String   @unique
-  walletAddress   String
-  phoneNumber     String?
-  email           String?
-
-  fiatAmount      Float
-  fiatCurrency    String   // KES, UGX, NGN, etc.
-  usdAmount       Float
-  axcnhAmount     Float
-
-  paymentMethod   String   // mpesa, card, bank_transfer
-  status          String   // pending, processing, completed, failed
-  flutterwaveRef  String?
-  txHash          String?   // Conflux transaction hash
-
-  rateUsed        Float
-  feePercent      Float
-  feeAmount       Float
-  totalAmount     Float
-
-  createdAt       DateTime @default(now())
-  completedAt     DateTime?
-
-  @@index([status])
-  @@index([walletAddress])
-  @@index([createdAt])
-}
-
-model User {
-  id              String   @id @default(cuid())
-  phoneNumber     String?  @unique
-  email           String?  @unique
-  walletAddress   String   @unique
-
-  kycTier         Int      @default(0)  // 0,1,2
-  phoneVerified   Boolean  @default(false)
-  idVerified      Boolean  @default(false)
-
-  dailyVolumeUSD  Float    @default(0)
-  monthlyVolumeUSD Float   @default(0)
-  lastResetDate   DateTime @default(now())
-
-  transactions    Transaction[]
-  createdAt       DateTime @default(now())
-}
-```
-
----
-
-## 💰 Payment Flow
-
-### Step-by-Step Implementation
-
-```typescript
-// apps/backend/src/services/paymentService.ts
-import { Flutterwave } from "flutterwave-node-v3";
-
-export class PaymentService {
-  private flutterwave: Flutterwave;
-
-  constructor() {
-    this.flutterwave = new Flutterwave(
-      process.env.FLUTTERWAVE_PUBLIC_KEY,
-      process.env.FLUTTERWAVE_SECRET_KEY,
-    );
-  }
-
-  async initiatePayment(params: {
-    walletAddress: string;
-    fiatAmount: number;
-    fiatCurrency: string;
-    paymentMethod: string;
-    phoneNumber?: string;
-    email?: string;
-  }) {
-    // 1. Get exchange rate
-    const rate = await this.getExchangeRate(params.fiatCurrency);
-    const usdAmount = params.fiatAmount / rate;
-    const axcnhAmount = usdAmount; // 1:1 peg
-
-    // 2. Calculate fees
-    const feePercent = 2.0;
-    const feeAmount = params.fiatAmount * (feePercent / 100);
-    const totalAmount = params.fiatAmount + feeAmount;
-
-    // 3. Create transaction record
-    const transaction = await prisma.transaction.create({
-      data: {
-        transactionId: `tx_${Date.now()}_${Math.random().toString(36)}`,
-        walletAddress: params.walletAddress,
-        phoneNumber: params.phoneNumber,
-        email: params.email,
-        fiatAmount: params.fiatAmount,
-        fiatCurrency: params.fiatCurrency,
-        usdAmount,
-        axcnhAmount,
-        paymentMethod: params.paymentMethod,
-        status: "pending",
-        rateUsed: rate,
-        feePercent,
-        feeAmount,
-        totalAmount,
-      },
-    });
-
-    // 4. Initialize Flutterwave payment
-    const payment = await this.flutterwave.Charge({
-      tx_ref: transaction.transactionId,
-      amount: totalAmount,
-      currency: params.fiatCurrency,
-      payment_options: params.paymentMethod,
-      redirect_url: `${process.env.APP_URL}/status/${transaction.transactionId}`,
-      customer: {
-        email: params.email || `user_${transaction.transactionId}@axpesa.com`,
-        phonenumber: params.phoneNumber,
-        name: `User ${transaction.transactionId.slice(-6)}`,
-      },
-      customizations: {
-        title: "AxPesa",
-        description: `Buy ${axcnhAmount.toFixed(2)} AxCNH`,
-        logo: "https://axpesa.com/logo.png",
-      },
-    });
-
-    // 5. Add to queue for processing
-    await this.queueTransaction(transaction.transactionId);
-
-    return {
-      transactionId: transaction.transactionId,
-      paymentLink: payment.data.link,
-      rate,
-      estimatedAxcnh: axcnhAmount,
-      fee: feeAmount,
-      total: totalAmount,
-    };
-  }
-
-  async handleWebhook(payload: any, signature: string) {
-    // 1. Verify signature
-    if (!this.verifyWebhookSignature(payload, signature)) {
-      throw new Error("Invalid webhook signature");
-    }
-
-    // 2. Get transaction
-    const transaction = await prisma.transaction.findUnique({
-      where: { transactionId: payload.tx_ref },
-    });
-
-    if (!transaction) {
-      throw new Error("Transaction not found");
-    }
-
-    // 3. If payment successful, execute swap
-    if (payload.status === "successful") {
-      const txHash = await this.executeSwapAndTransfer(
-        transaction.usdAmount,
-        transaction.walletAddress,
-      );
-
-      // 4. Update transaction
-      await prisma.transaction.update({
-        where: { id: transaction.id },
-        data: {
-          status: "completed",
-          flutterwaveRef: payload.id,
-          txHash,
-          completedAt: new Date(),
-        },
-      });
-
-      // 5. Send SMS confirmation
-      await this.sendSMS(
-        transaction.phoneNumber,
-        `✅ Received ${transaction.axcnhAmount.toFixed(2)} AxCNH at ${transaction.walletAddress.slice(0, 10)}... View: https://evm.confluxscan.net/tx/${txHash}`,
-      );
-    }
-
-    return { received: true };
-  }
-
-  private async executeSwapAndTransfer(usdAmount: number, userAddress: string) {
-    // Using ethers.js for Conflux eSpace
-    const provider = new ethers.JsonRpcProvider(process.env.CONFLUX_RPC_URL);
-    const wallet = new ethers.Wallet(
-      process.env.HOT_WALLET_PRIVATE_KEY,
-      provider,
-    );
-
-    // Load Swappi router contract
-    const router = new ethers.Contract(
-      process.env.SWAPPI_ROUTER_ADDRESS,
-      SWAPPI_ROUTER_ABI,
-      wallet,
-    );
-
-    // Execute swap: USDC → AxCNH
-    const usdcAmount = ethers.parseUnits(usdAmount.toString(), 6); // USDC has 6 decimals
-    const amountOutMin = this.calculateMinOutput(usdAmount);
-
-    const tx = await router.swapExactTokensForTokens(
-      usdcAmount,
-      amountOutMin,
-      [process.env.USDC_ADDRESS, process.env.AXCNH_ADDRESS],
-      userAddress,
-      Math.floor(Date.now() / 1000) + 1200,
-      { gasLimit: 300000 },
-    );
-
-    const receipt = await tx.wait();
-    return receipt.hash;
-  }
-}
-```
-
----
-
-## 🌐 Next.js Frontend
-
-### Buy Page Component
-
-```tsx
-// apps/web/src/app/buy/page.tsx
-"use client";
-
-import { useState } from "react";
-import { AmountInput } from "@/components/onramp/AmountInput";
-import { WalletInput } from "@/components/onramp/WalletInput";
-import { PaymentMethods } from "@/components/onramp/PaymentMethods";
-import { RateDisplay } from "@/components/onramp/RateDisplay";
-import { usePayment } from "@/hooks/usePayment";
-
-export default function BuyPage() {
-  const [amount, setAmount] = useState(1000);
-  const [currency, setCurrency] = useState("KES");
-  const [wallet, setWallet] = useState("");
-  const [autoCreate, setAutoCreate] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState("mpesa");
-  const [phoneNumber, setPhoneNumber] = useState("");
-
-  const { initiatePayment, loading, rate, error } = usePayment();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const result = await initiatePayment({
-      walletAddress: autoCreate ? undefined : wallet,
-      fiatAmount: amount,
-      fiatCurrency: currency,
-      paymentMethod,
-      phoneNumber,
-    });
-
-    if (result.paymentLink) {
-      window.location.href = result.paymentLink;
-    }
-  };
-
-  return (
-    <div className="max-w-2xl mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold mb-8">Buy AxCNH Stablecoin</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <RateDisplay currency={currency} rate={rate} />
-
-        <AmountInput
-          amount={amount}
-          currency={currency}
-          onAmountChange={setAmount}
-          onCurrencyChange={setCurrency}
-        />
-
-        <WalletInput
-          wallet={wallet}
-          autoCreate={autoCreate}
-          onWalletChange={setWallet}
-          onAutoCreateChange={setAutoCreate}
-        />
-
-        <PaymentMethods
-          selected={paymentMethod}
-          onChange={setPaymentMethod}
-          currency={currency}
-        />
-
-        {paymentMethod === "mpesa" && (
-          <input
-            type="tel"
-            placeholder="Phone number (e.g., 254700123456)"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="w-full p-3 border rounded-lg"
-            required
-          />
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold disabled:opacity-50"
-        >
-          {loading
-            ? "Processing..."
-            : `Buy ${(amount / rate).toFixed(2)} AxCNH`}
-        </button>
-
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-      </form>
-    </div>
-  );
-}
-```
-
----
-
-## 📱 React Native Mobile App
-
-### Main Buy Screen
-
-```tsx
-// apps/mobile/src/screens/BuyScreen.tsx
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
-import { usePayment } from "../hooks/usePayment";
-import { PaymentMethodCard } from "../components/PaymentMethodCard";
-import { AmountInput } from "../components/AmountInput";
-
-export function BuyScreen() {
-  const [amount, setAmount] = useState("1000");
-  const [currency, setCurrency] = useState("KES");
-  const [wallet, setWallet] = useState("");
-  const [autoCreate, setAutoCreate] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState("mpesa");
-  const [phoneNumber, setPhoneNumber] = useState("");
-
-  const { initiatePayment, loading, rate } = usePayment();
-
-  const handleBuy = async () => {
-    const result = await initiatePayment({
-      walletAddress: autoCreate ? undefined : wallet,
-      fiatAmount: parseFloat(amount),
-      fiatCurrency: currency,
-      paymentMethod,
-      phoneNumber,
-    });
-
-    if (result.paymentLink) {
-      // Open WebView for Flutterwave payment page
-      // or use deep linking
-      Linking.openURL(result.paymentLink);
-    }
-  };
-
-  return (
-    <ScrollView className="flex-1 bg-gray-50">
-      <View className="p-6">
-        <Text className="text-2xl font-bold mb-2">Buy AxCNH</Text>
-        <Text className="text-gray-600 mb-6">
-          Get Conflux stablecoin in seconds
-        </Text>
-
-        <View className="bg-white rounded-xl p-4 mb-4 shadow-sm">
-          <AmountInput
-            amount={amount}
-            currency={currency}
-            onAmountChange={setAmount}
-            onCurrencyChange={setCurrency}
-            rate={rate}
-          />
-        </View>
-
-        <View className="bg-white rounded-xl p-4 mb-4">
-          <Text className="font-semibold mb-2">Conflux Wallet</Text>
-          <View className="flex-row items-center mb-3">
-            <TouchableOpacity
-              onPress={() => setAutoCreate(true)}
-              className={`flex-1 py-2 rounded-l-lg ${
-                autoCreate ? "bg-green-600" : "bg-gray-200"
-              }`}
-            >
-              <Text
-                className={`text-center ${autoCreate ? "text-white" : "text-gray-700"}`}
-              >
-                Auto-create
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setAutoCreate(false)}
-              className={`flex-1 py-2 rounded-r-lg ${
-                !autoCreate ? "bg-green-600" : "bg-gray-200"
-              }`}
-            >
-              <Text
-                className={`text-center ${!autoCreate ? "text-white" : "text-gray-700"}`}
-              >
-                I have a wallet
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {!autoCreate && (
-            <TextInput
-              placeholder="cfx:aak2..."
-              value={wallet}
-              onChangeText={setWallet}
-              className="border border-gray-300 rounded-lg p-3"
-            />
-          )}
-        </View>
-
-        <Text className="font-semibold mb-2">Payment Method</Text>
-        <PaymentMethodCard
-          method="mpesa"
-          selected={paymentMethod === "mpesa"}
-          onSelect={() => setPaymentMethod("mpesa")}
-        />
-        <PaymentMethodCard
-          method="card"
-          selected={paymentMethod === "card"}
-          onSelect={() => setPaymentMethod("card")}
-        />
-        <PaymentMethodCard
-          method="bank_transfer"
-          selected={paymentMethod === "bank_transfer"}
-          onSelect={() => setPaymentMethod("bank_transfer")}
-        />
-
-        {paymentMethod === "mpesa" && (
-          <TextInput
-            placeholder="Phone number (254700123456)"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-            className="bg-white border border-gray-300 rounded-lg p-3 mt-4"
-          />
-        )}
-
-        <TouchableOpacity
-          onPress={handleBuy}
-          disabled={loading}
-          className="bg-green-600 py-4 rounded-lg mt-6"
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white text-center font-semibold text-lg">
-              Buy {(parseFloat(amount) / (rate || 128) || 0).toFixed(2)} AxCNH
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
-}
-```
-
-### Build APK
+### 4. Database Setup
 
 ```bash
-# Using Expo EAS
-cd apps/mobile
-eas build -p android --profile production
-
-# Or using React Native CLI
-cd apps/mobile
-cd android && ./gradlew assembleRelease
-# APK located at: android/app/build/outputs/apk/release/
+cd apps/backend
+npm run db:generate
+npm run db:push
 ```
 
----
+### 5. Start Development Servers
 
-## ⛓️ Conflux Integration
+```bash
+# Start all services (frontend + backend)
+npm run dev
 
-### ethers.js Setup
-
-```typescript
-// apps/backend/src/services/confluxService.ts
-import { ethers } from "ethers";
-
-export class ConfluxService {
-  private provider: ethers.JsonRpcProvider;
-  private wallet: ethers.Wallet;
-  private axcnhContract: ethers.Contract;
-
-  constructor() {
-    this.provider = new ethers.JsonRpcProvider(process.env.CONFLUX_RPC_URL);
-    this.wallet = new ethers.Wallet(
-      process.env.HOT_WALLET_PRIVATE_KEY,
-      this.provider,
-    );
-
-    const axcnhABI = [
-      "function balanceOf(address) view returns (uint256)",
-      "function transfer(address to, uint256 amount) returns (bool)",
-      "function decimals() view returns (uint8)",
-    ];
-
-    this.axcnhContract = new ethers.Contract(
-      process.env.AXCNH_CONTRACT_ADDRESS,
-      axcnhABI,
-      this.wallet,
-    );
-  }
-
-  async transferAxCNH(toAddress: string, amount: number): Promise<string> {
-    const decimals = await this.axcnhContract.decimals();
-    const amountWei = ethers.parseUnits(amount.toString(), decimals);
-
-    const tx = await this.axcnhContract.transfer(toAddress, amountWei, {
-      gasLimit: 100000,
-    });
-
-    const receipt = await tx.wait();
-    return receipt.hash;
-  }
-
-  async getBalance(address: string): Promise<number> {
-    const balance = await this.axcnhContract.balanceOf(address);
-    const decimals = await this.axcnhContract.decimals();
-    return parseFloat(ethers.formatUnits(balance, decimals));
-  }
-}
+# Or start individually
+npm run dev:web    # Frontend at http://localhost:3000
+npm run dev:backend # Backend at http://localhost:8080
 ```
 
 ---
 
 ## 🧪 Testing
 
+### Run Smart Contract Tests
+
 ```bash
-# Backend tests
-cd apps/backend
-npm test
-npm run test:integration
+npm run test:contracts
+```
 
-# Web tests
-cd apps/web
-npm test
-npm run e2e
+### Test Coverage
 
-# Mobile tests
-cd apps/mobile
-npm test
+The test suite includes:
+
+**AxCNH Token Tests:**
+
+- Deployment and initialization
+- Minting by owner and authorized minters
+- Access control
+
+**AxPesaVault Tests:**
+
+- Deposit (90% locked, 10% liquidity split)
+- Withdraw (owner only)
+- Multi-sig emergency withdrawals
+- Vault statistics tracking
+
+---
+
+## 📱 Usage
+
+### Getting Started
+
+#### 1. Login
+
+- Click **Login** button
+- Choose social login (Google, Twitter, etc.)
+- No wallet extension needed - wallet is created automatically
+
+#### 2. Buy AxCNH (On-ramp)
+
+1. Go to **Buy** page
+2. Select AxCNH as the token
+3. Enter amount in KES
+4. Choose payment method (M-PESA recommended)
+5. Complete payment
+6. Receive AxCNH in wallet
+
+#### 3. Sell AxCNH (Off-ramp)
+
+1. Go to **Sell** page
+2. Enter AxCNH amount to sell
+3. Choose payout method (M-PESA)
+4. Enter phone number
+5. Receive KES in minutes
+
+#### 4. Send AxCNH (P2P Transfer)
+
+1. Go to **Send** page
+2. Enter recipient:
+   - Email address (if AxPesa user)
+   - Phone number (if AxPesa user)
+   - Wallet address (0x... or cfx:...)
+3. Enter amount
+4. Add optional note
+5. Click **Send**
+6. Recipient receives instantly
+
+#### 5. Stake & Earn
+
+1. Go to **Staking** page
+2. Choose a staking plan (flexible, 30 days, 90 days)
+3. Stake your AxCNH
+4. Earn rewards over time
+
+---
+
+## 🎬 Demo
+
+### Live Demo
+
+**URL**: (Coming soon after deployment)
+
+### Screenshots
+
+#### Landing Page
+
+- Hero: "African Finance, Evolved"
+- "Your Money, Multiple Options"
+- Purple/pink gradient theme
+
+#### Dashboard
+
+- View all balances
+- Quick actions (Buy, Sell, Send)
+- Transaction history
+
+#### Transfer Page
+
+- Send by email, phone, or address
+- Transaction history
+
+---
+
+## 📄 Smart Contracts
+
+### Important Note on Tokens
+
+AxCNH is an **external ERC-20 stablecoin** (like USDT or USDC), not a token we created or control. We use it as the CNY stablecoin for our platform. For **testnet demonstration purposes**, we deployed a test version. In production, AxPesa would integrate with the actual AxCNH token.
+
+### Deployed Contracts
+
+#### Testnet (Conflux eSpace)
+
+| Contract    | Address                                      | Explorer                                                                                     |
+| ----------- | -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| AxCNH Token | `0xD41Ca697EEF60fE35f9e92441A180915D6465516` | [View](https://evmtestnet.confluxscan.io/address/0xD41Ca697EEF60fE35f9e92441A180915D6465516) |
+| AxPesaVault | `0xCFC0aA7Afab6d6a617D6CB5213bf9f206604bcF6` | [View](https://evmtestnet.confluxscan.io/address/0xCFC0aA7Afab6d6a617D6CB5213bf9f206604bcF6) |
+
+### AxPesaVault Interface
+
+```solidity
+interface IAxPesaVault {
+    function deposit(uint256 amount) external;
+    function withdraw(address user, uint256 amount) external;
+    function getUserInfo(address user) external view returns (
+        uint256 totalDeposit,
+        uint256 lockedAmount,
+        uint256 withdrawable
+    );
+    function getVaultStats() external view returns (
+        uint256 totalDeposited,
+        uint256 totalLocked,
+        uint256 liquidityPool,
+        uint256 vaultBalance
+    );
+    event Deposited(address indexed user, uint256 amount, uint256 locked, uint256 toLiquidity);
+    event Withdrawn(address indexed user, uint256 amount);
+}
 ```
 
 ---
 
-## 🚢 Deployment
+## 🔧 API Documentation
 
-### Backend (Railway)
+### Base URL
 
-```bash
-cd apps/backend
-railway login
-railway init
-railway up
+```
+http://localhost:8080/api
 ```
 
-### Web (Vercel)
+### Authentication
 
-```bash
-cd apps/web
-vercel login
-vercel --prod
+#### Social Login (Web3Auth)
+
+```
+POST /auth/web3auth/verify
 ```
 
-### Mobile APK (EAS)
+#### Email Login
 
-```bash
-cd apps/mobile
-eas build -p android --profile production
-# Download APK from EAS dashboard
+```
+POST /auth/login
+POST /auth/register
+```
+
+### On-ramp (Buy)
+
+```
+GET  /onramp/rates
+POST /onramp/initiate
+```
+
+### Off-ramp (Sell)
+
+```
+GET  /offramp/rate/:currency
+POST /offramp/initiate
+```
+
+### Transfer (P2P)
+
+```
+POST /transfer          # Send tokens
+GET  /transfer/history # Transfer history
+GET  /transfer/balance # Check balance
+```
+
+### Staking
+
+```
+POST /staking/stake     # Stake tokens
+GET  /staking/positions # Get staking positions
+POST /staking/claim    # Claim rewards
+```
+
+### Merchant
+
+```
+POST /merchant/payment-link      # Create payment link
+GET  /merchant/payment-links    # List payment links
+GET  /merchant/qr/:linkCode     # Get QR code
+GET  /merchant/dashboard        # Dashboard stats
+```
+
+### Faucet (Testnet Only)
+
+```
+POST /faucet/claim     # Claim test tokens
+GET  /faucet/status/:address # Check status
 ```
 
 ---
 
-## 🎥 Demo
+## 🔒 Security
 
-### Demo Video (3-5 minutes)
+### Smart Contract Security
 
-1. **0:00-0:30** — Introduction to AxPesa
-2. **0:30-1:00** — Next.js website walkthrough
-3. **1:00-2:00** — Complete M-PESA purchase flow
-4. **2:00-2:30** — Show AxCNH arriving on ConfluxScan
-5. **2:30-3:00** — Card payment alternative
-6. **3:00-3:30** — React Native app demo
-7. **3:30-4:00** — Transaction status page
-8. **4:00-4:30** — SMS confirmation
-9. **4:30-5:00** — Future roadmap
+| Measure                | Implementation                   |
+| ---------------------- | -------------------------------- |
+| **Access Control**     | OpenZeppelin Ownable, Roles      |
+| **Reentrancy**         | OpenZeppelin SafeERC20           |
+| **Integer Overflow**   | Solidity 0.8.28 built-in checks  |
+| **Multi-sig**          | 2-of-3 for emergency withdrawals |
+| **Vault Architecture** | 90% locked, 10% liquidity        |
 
-### Participant Intro Video
+### Application Security
 
-> _"I'm [Name] from [Country], building AxPesa for Global Hackfest 2026. AxPesa is a seamless fiat-to-stablecoin onramp for Conflux Network. We built a Next.js website and React Native mobile app that lets anyone buy AxCNH using M-PESA, cards, or bank transfers through Flutterwave. No crypto experience needed. I'm excited to bring Conflux to emerging markets!"_
+| Measure              | Implementation              |
+| -------------------- | --------------------------- |
+| **Authentication**   | JWT + Web3Auth verification |
+| **Input Validation** | Zod schema validation       |
+| **Rate Limiting**    | express-rate-limit          |
+| **CORS**             | Whitelisted origins only    |
+| **Helmet**           | Security headers            |
+
+---
+
+## 🚧 Known Issues & Roadmap
+
+### Current Limitations
+
+1. **Testnet Only**: All contracts and integrations are on Conflux eSpace Testnet
+2. **Limited Fiat**: Only KES (Kenyan Shilling) fully integrated
+3. **AxCNH Test Token**: Using test token for demonstration
+
+### Roadmap
+
+- [ ] Mainnet deployment
+- [ ] Add UGX, NGN support
+- [ ] Professional smart contract audit
+- [ ] Cross-space Conflux features
+- [ ] More stablecoin options
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our Contributing Guidelines for details.
+
+### Development Process
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
 ---
 
 ## 📄 License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**Built for Global Hackfest 2026** 🏆
+## 🙏 Acknowledgments
+
+### Built With
+
+- [Conflux Network](https://confluxnetwork.org) - Blockchain infrastructure
+- [Web3Auth](https://web3auth.io) - Social login authentication
+- [Flutterwave](https://flutterwave.com) - M-PESA and African payments
+- [OpenZeppelin](https://openzeppelin.com) - Smart contract libraries
+- [Hardhat](https://hardhat.org) - Ethereum development environment
 
 ---
+
+## 📞 Contact & Support
+
+### Team
+
+| Name           | Role | GitHub         | Discord         |
+| -------------- | ---- | -------------- | --------------- |
+| Anthony Kimani | CTO  | @anthonykimani | tonykim8450     |
+| Moses Epale    | COO  | @mosesepale    | mosesepale#1234 |
+
+### Project Links
+
+- **GitHub**: https://github.com/your-username/axpesa
+- **Demo**: (Coming soon)
+
+---
+
+Built with ❤️ for Global Hackfest 2026
+
+**African Finance, Evolved.**

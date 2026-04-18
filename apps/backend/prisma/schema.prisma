@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  web3auth_id   String?       @unique
+  email         String?       @unique
+  hashedEmail   String?       @unique
+  phoneNumber   String?       @unique
+  hashedPhone   String?
+  walletAddress String        @unique
+  kycTier       Int           @default(0)
+  phoneVerified Boolean       @default(false)
+  idVerified    Boolean       @default(false)
+  dailyVolume   Float         @default(0)
+  monthlyVolume Float         @default(0)
+  lastResetDate DateTime      @default(now())
+  transactions  Transaction[]
+  stakingPositions StakingPosition[]
+  stakingRewards  StakingReward[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Merchant {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  passwordHash    String
+  businessName    String
+  businessType    String
+  phoneNumber     String
+  walletAddress   String
+  kycStatus       String         @default("pending")
+  isActive        Boolean        @default(true)
+  payoutMethod    String?
+  payoutDetails   String?
+  paymentLinks    PaymentLink[]
+  transactions    Transaction[]
+  dailyVolume     Float          @default(0)
+  monthlyVolume   Float          @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Transaction {
+  id             String   @id @default(cuid())
+  transactionId  String   @unique
+  type           String   @default("onramp")
+  
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id])
+  
+  merchantId     String?
+  merchant       Merchant? @relation(fields: [merchantId], references: [id])
+
+  paymentLinkId  String?
+  paymentLink    PaymentLink? @relation(fields: [paymentLinkId], references: [id])
+  
+  walletAddress  String
+  
+  fiatAmount     Float
+  fiatCurrency   String
+  usdAmount      Float
+  axcnhAmount    Float
+  
+  paymentMethod  String
+  status         String   @default("pending")
+  
+  flutterwaveRef String?
+  txHash         String?
+  
+  rateUsed       Float
+  feePercent     Float
+  feeAmount      Float
+  totalAmount    Float
+  
+  createdAt      DateTime @default(now())
+  completedAt    DateTime?
+  
+  @@index([status])
+  @@index([walletAddress])
+  @@index([userId])
+  @@index([merchantId])
+  @@index([createdAt])
+}
+
+model PaymentLink {
+  id           String     @id @default(cuid())
+  linkCode     String     @unique
+  merchantId   String
+  merchant     Merchant   @relation(fields: [merchantId], references: [id])
+  amount       Float?
+  currency     String     @default("AXCNH")
+  description  String?
+  isActive     Boolean    @default(true)
+  maxUses      Int?
+  useCount     Int        @default(0)
+  expiresAt    DateTime?
+  transactions Transaction[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model ExchangeRate {
+  id        String   @id @default(cuid())
+  currency  String   @unique
+  rateToUSD Float
+  updatedAt DateTime @default(now())
+}
+
+model StakingPosition {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  positionId      Int      // Index in smart contract
+  plan            String   // "flexible", "30days", "90days"
+  amount          Float
+  principal       Float
+  startTime       DateTime
+  lastCompoundTime DateTime
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([isActive])
+}
+
+model StakingReward {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  positionId  Int
+  amount      Float
+  type        String   // "compound", "claim", "unstake"
+  txHash      String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+}
+
+model StakingStats {
+  id                      String   @id @default(cuid())
+  totalStakedAmount       Float    @default(0)
+  totalRewardsDistributed  Float    @default(0)
+  rewardPoolBalance       Float    @default(0)
+  updatedAt               DateTime @updatedAt
+}

@@ -1,0 +1,85 @@
+{
+  "network": "confluxESpaceTestnet",
+  "chainId": 71,
+  "deployer": "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+  "timestamp": "2026-04-14T22:40:34.567Z",
+  "AxCNH": {
+    "address": "0xD41Ca697EEF60fE35f9e92441A180915D6465516",
+    "symbol": "AxCNH",
+    "decimals": 18,
+    "minter": "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+    "vaultMinter": "0xee25A075B38a483555Da802B7851E5D40e08E02F"
+  },
+  "vaults": {
+    "AxCNH": {
+      "address": "0xCFC0aA7Afab6d6a617D6CB5213bf9f206604bcF6",
+      "owner": "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+      "signers": [
+        "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+        "0x84a53923D7919b7a0761F3F95357A8a2dEf955A3",
+        "0x059c159c1061C3cd082d020e0F77260234A3f523"
+      ],
+      "requiredSignatures": 2,
+      "token": "0xD41Ca697EEF60fE35f9e92441A180915D6465516",
+      "tokenName": "AxCNH",
+      "liquidityPercent": 10,
+      "lockedPercent": 90,
+      "hasSeedLiquidity": true
+    },
+    "USDTO": {
+      "address": "0x2FC267bd9Da5406E15ebc3eCa286A2426d714753",
+      "owner": "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+      "signers": [
+        "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+        "0x84a53923D7919b7a0761F3F95357A8a2dEf955A3",
+        "0x059c159c1061C3cd082d020e0F77260234A3f523"
+      ],
+      "requiredSignatures": 2,
+      "token": "0x4d1beB67e8f0102d5c983c26FDf0b7C6FFF37a0c",
+      "tokenName": "USDTO",
+      "liquidityPercent": 10,
+      "lockedPercent": 90
+    },
+    "BTC": {
+      "address": "0x8b97bc4113Dac6c830Ec2f60197ee6a4C5bc2a67",
+      "owner": "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+      "signers": [
+        "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+        "0x84a53923D7919b7a0761F3F95357A8a2dEf955A3",
+        "0x059c159c1061C3cd082d020e0F77260234A3f523"
+      ],
+      "requiredSignatures": 2,
+      "token": "0x54593e02c39aeff52b166bd036797d2b1478de8d",
+      "tokenName": "BTC",
+      "liquidityPercent": 10,
+      "lockedPercent": 90
+    },
+    "ETH": {
+      "address": "0x8e3405f8225F8bf7fbDff93f49d8Efb31bF14de6",
+      "owner": "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+      "signers": [
+        "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+        "0x84a53923D7919b7a0761F3F95357A8a2dEf955A3",
+        "0x059c159c1061C3cd082d020e0F77260234A3f523"
+      ],
+      "requiredSignatures": 2,
+      "token": "0xcd71270f82f319e0498ff98af8269c3f0d547c65",
+      "tokenName": "ETH",
+      "liquidityPercent": 10,
+      "lockedPercent": 90
+    }
+  },
+  "usage": {
+    "SELL (User deposits)": "user calls vault.deposit(amount) → 90% locked, 10% to liquidity",
+    "BUY (User withdraws)": "owner calls vault.withdraw(userAddress, amount) after Flutterwave confirms",
+    "Emergency": "2-of-3 signers required for upgradeVault() or emergency withdrawal"
+  },
+  "upgradedAt": "2026-04-15T02:06:05.341Z",
+  "newVault": "0xCFC0aA7Afab6d6a617D6CB5213bf9f206604bcF6",
+  "AxPesaStaking": {
+    "address": "0xE27ff8eA187d9E82870b8E9eDc9064bb6A9A2601",
+    "owner": "0xa7AE94401819F83DD7C3D9AA012e6dAb2c2e2D77",
+    "stakingToken": "0xD41Ca697EEF60fE35f9e92441A180915D6465516",
+    "timestamp": "2026-04-16T23:58:05.195Z"
+  }
+}
