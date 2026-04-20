@@ -14,12 +14,14 @@ AxPesa is a fintech platform enabling Africans to access global currencies throu
 
 **Our Solution:** AxPesa expands your currency options by providing:
 
-- **Buy/Sell** CNY stablecoins with M-PESA, cards, or bank transfer
+- **Buy/Sell** CNY stablecoins (AxCNH) with M-PESA, cards, or bank transfer
 - **Send** to friends instantly via email, phone, or wallet address
-- **Save** in CNY to diversify your currency holdings
-- **Earn** staking rewards on your holdings
+- **Treasury** - AxPesa's settlement wallet for secure buy/sell operations (90% locked, 10% liquidity)
+- **Earn** staking rewards on your holdings via Conflux DeFi protocols
 - **For Merchants** - Accept payments with QR codes and payment links
-- **Social Login** - No crypto knowledge required
+- **Social Login** - No crypto knowledge required (Google, Twitter, Discord, GitHub, LinkedIn)
+- **CFX Faucet** - New users get 0.1 CFX for gas fees automatically
+- **Privacy** - Email/phone stored as hashed values with salt
 
 --- |
 
@@ -64,17 +66,23 @@ Africans deserve more currency options than just USD:
 
 AxPesa expands your currency options through a simple, accessible platform. No more being restricted to just USD.
 
-### Core Features
+### Core Features (All Live)
 
-| Feature | Description |
-|---------|-------------|
-| **Buy AxCNH** | Purchase Chinese Yuan stablecoins with M-PESA, cards, or bank transfer |
-| **Sell AxCNH** | Convert AxCNH back to KES, UGX, NGN with instant settlement |
-| **Send AxCNH** | Transfer to friends by email, phone, or wallet address |
-| **Dashboard** | Track balances, transactions, and treasury holdings |
-| **Staking** | Earn rewards via Conflux DeFi protocols (1% platform fee) |
-| **Merchant Portal** | QR codes and payment links for businesses |
-| **Mobile App** | React Native iOS/Android apps |
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **Social Login** | ✅ Live | Google, Twitter, Discord, GitHub, LinkedIn - no wallet needed |
+| **Buy AxCNH** | ✅ Live | M-PESA, cards, bank transfer with instant settlement |
+| **Sell AxCNH** | ✅ Live | Convert to KES, UGX, NGN via M-PESA |
+| **Send AxCNH** | ✅ Live | P2P transfers via email/phone/address |
+| **Dashboard** | ✅ Live | View balances, transactions, treasury holdings |
+| **Staking** | ✅ Live | Earn rewards via Conflux DeFi (1% platform fee) |
+| **Merchant Portal** | ✅ Live | QR codes and payment links for businesses |
+| **CFX Faucet** | ✅ Live | New users receive 0.1 CFX for gas fees |
+| **Treasury** | ✅ Live | Settlement wallet (90% locked, 10% liquidity pool) |
+| **Multi-sig Security** | ✅ Live | 2-of-3 admin signatures for treasury operations |
+| **Privacy** | ✅ Live | Email/phone hashed with salt |
+| **Idempotency** | ✅ Live | Payment protection against duplicates |
+| **Reconciliation** | ✅ Live | Cron job catches dropped webhooks every 30 mins |
 
 ### Go-to-Market Plan
 
@@ -601,22 +609,33 @@ GET  /faucet/status/:address # Check status
 | **Rate Limiting**    | express-rate-limit          |
 | **CORS**             | Whitelisted origins only    |
 | **Helmet**           | Security headers            |
+| **Privacy**         | Email/phone hashed with salt |
+| **Idempotency**      | Payment keys prevent duplicates |
+| **Reconciliation**  | Cron job catches dropped webhooks |
 
 ---
 
 ## 🚧 Known Issues & Roadmap
 
-### Current Limitations
+### Current Status
 
 1. **Testnet Only**: All contracts and integrations are on Conflux eSpace Testnet
 2. **Limited Fiat**: Only KES (Kenyan Shilling) fully integrated
 3. **AxCNH Test Token**: Using test token for demonstration
 
+### What's Working
+
+- ✅ Smart contract tests (17 passing)
+- ✅ Backend API with all endpoints
+- ✅ Frontend with social login
+- ✅ Flutterwave integration for M-PESA
+- ✅ CFX faucet for new users
+- ✅ Idempotency + reconciliation for payments
+
 ### Roadmap
 
-- [ ] Mainnet deployment
+- [ ] Mainnet deployment (with grant funding)
 - [ ] Add UGX, NGN support
-- [ ] Professional smart contract audit
 - [ ] Cross-space Conflux features
 - [ ] More stablecoin options
 

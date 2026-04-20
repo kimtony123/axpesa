@@ -20,7 +20,9 @@
     "contracts:deploy": "npm run deploy:testnet --workspace=apps/contracts",
     "build:contracts": "npm run compile --workspace=apps/contracts",
     "test:contracts": "npm run test --workspace=apps/contracts",
-    "deploy:contracts": "npm run deploy:testnet --workspace=apps/contracts"
+    "deploy:contracts": "npm run deploy:testnet --workspace=apps/contracts",
+    "test:api": "npm run test:api --workspace=apps/backend",
+    "test:e2e": "npm run test:e2e --workspace=apps/backend"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
