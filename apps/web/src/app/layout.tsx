@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
-import WalletScripts from '@/components/WalletScripts';
-import WalletAutoConnect from '@/hooks/useWalletConnection';
 
 export const metadata: Metadata = {
   title: 'AxPesa - Buy & Sell AxCNH on Conflux',
@@ -15,10 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" async />
       </head>
       <body className="min-h-screen bg-gray-50">
-        <WalletScripts />
-        <WalletAutoConnect>
-          {children}
-        </WalletAutoConnect>
+        {children}
       </body>
     </html>
   );

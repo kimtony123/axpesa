@@ -9,6 +9,7 @@ interface WalletState {
   error: string | null;
   authType: 'web3auth' | null;
   user: { id?: string; email?: string; walletAddress?: string; kycTier?: number } | null;
+  hasCheckedConnection: boolean;
   
   balances: Record<string, string>;
   vaultBalances: Record<string, { totalDeposit: string; locked: string; withdrawable: string }>;
@@ -21,6 +22,8 @@ interface WalletState {
   setChainId: (chainId: number) => void;
   setBalances: (balances: Record<string, string>) => void;
   setVaultBalances: (vaultBalances: Record<string, { totalDeposit: string; locked: string; withdrawable: string }>) => void;
+  setHasCheckedConnection: (checked: boolean) => void;
+  checkConnection: () => void;
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -33,6 +36,7 @@ export const useWalletStore = create<WalletState>()(
       error: null,
       authType: null,
       user: null,
+      hasCheckedConnection: false,
       balances: {},
       vaultBalances: {},
 
@@ -81,6 +85,14 @@ export const useWalletStore = create<WalletState>()(
       setVaultBalances: (vaultBalances: Record<string, { totalDeposit: string; locked: string; withdrawable: string }>) => {
         set({ vaultBalances });
       },
+
+      setHasCheckedConnection: (checked: boolean) => {
+        set({ hasCheckedConnection: checked });
+      },
+
+      checkConnection: () => {
+        set({ hasCheckedConnection: true });
+      },
     }),
     {
       name: 'axpesa-wallet',
@@ -88,3 +100,7 @@ export const useWalletStore = create<WalletState>()(
     }
   )
 );
+
+export const setHasCheckedConnection = (checked: boolean) => {
+  useWalletStore.setState({ hasCheckedConnection: checked });
+};
