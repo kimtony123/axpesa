@@ -22,7 +22,21 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(helmet());
-app.use(cors({ origin: process.env.APP_URL || 'http://localhost:3000' }));
+
+// CORS - allow multiple origins for development and production
+const allowedOrigins = (
+  [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    process.env.APP_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+  ].filter((origin): origin is string => typeof origin === 'string' && origin.length > 0)
+);
+
+app.use(cors({
+  origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+  credentials: true,
+}));
 app.use(express.json());
 app.use(rateLimiter);
 
@@ -43,5 +57,9 @@ app.get('/api/health', (_, res) => res.json({ status: 'ok', timestamp: new Date(
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🚀 AxPesa Backend running on port ${PORT}`);
+  const env = process.env.NODE_ENV || 'development';
+  console.log(`🚀 AxPesa Backend running on port ${PORT} (${env})`);
+  if (env === 'production') {
+    console.log(`📦 Production mode - Database: ${process.env.DATABASE_URL ? 'connected' : 'NOT CONNECTED'}`);
+  }
 });

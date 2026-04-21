@@ -88,7 +88,7 @@ router.post('/lookup', async (req: Request, res: Response, next: NextFunction) =
       success: true,
       data: {
         walletAddress: recipientAddress,
-        name: recipientUser?.name || null,
+        name: (recipientUser as any)?.name || null,
       },
     });
   } catch (err) {
