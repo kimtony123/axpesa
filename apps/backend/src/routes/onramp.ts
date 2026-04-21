@@ -285,4 +285,192 @@ router.post('/webhook/process/:transactionId', async (req, res, next) => {
   }
 });
 
+// Verify endpoint - checks payment status and processes vault if successful
+router.get('/verify/:transactionId', async (req, res, next) => {
+  try {
+    const { transactionId } = req.params;
+    const { flutterwave_tx_id, tx_ref } = req.query;
+    
+    const transaction = await prisma.transaction.findUnique({
+      where: { transactionId },
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Transaction not found', code: 'NOT_FOUND' }
+      });
+    }
+
+    // If already completed, return success
+    if (transaction.status === 'completed') {
+      return res.json({
+        success: true,
+        data: {
+          transactionId: transaction.transactionId,
+          status: 'completed',
+          axcnhAmount: transaction.axcnhAmount,
+          txHash: transaction.txHash,
+        }
+      });
+    }
+
+    // If failed, return failed status
+    if (transaction.status === 'failed' || transaction.status === 'cancelled') {
+      return res.json({
+        success: true,
+        data: {
+          transactionId: transaction.transactionId,
+          status: transaction.status,
+        }
+      });
+    }
+
+    // Verify with Flutterwave if transaction_id provided
+    let isVerified = false;
+    if (flutterwave_tx_id) {
+      const verified = await flutterwaveService.verifyTransaction(String(flutterwave_tx_id));
+      
+      if (verified.status === 'success' && verified.data?.status === 'successful') {
+        const verifiedAmount = parseFloat(verified.data.amount);
+        const expectedAmount = transaction.totalAmount;
+        
+        if (Math.abs(verifiedAmount - expectedAmount) <= 0.01) {
+          isVerified = true;
+        } else {
+          console.log(`Verify: Amount mismatch! Expected=${expectedAmount}, Got=${verifiedAmount}`);
+        }
+      }
+    }
+
+    // If Flutterwave verification passed or no pending status, process the transaction
+    if (isVerified || (transaction.status === 'pending' && !flutterwave_tx_id)) {
+      console.log(`Verify: Processing vault withdrawal for ${transaction.axcnhAmount} AxCNH to ${transaction.walletAddress}`);
+      
+      const txHash = await confluxService.withdrawFromVault(
+        transaction.walletAddress,
+        transaction.axcnhAmount,
+        'AxCNH'
+      );
+
+      await prisma.transaction.update({
+        where: { id: transaction.id },
+        data: {
+          status: 'completed',
+          txHash,
+          flutterwaveRef: String(flutterwave_tx_id || tx_ref || ''),
+          completedAt: new Date(),
+        },
+      });
+
+      // Update user volume
+      if (transaction.userId) {
+        await prisma.user.update({
+          where: { id: transaction.userId },
+          data: {
+            dailyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
+            monthlyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
+          },
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          transactionId: transaction.transactionId,
+          status: 'completed',
+          axcnhAmount: transaction.axcnhAmount,
+          txHash,
+        }
+      });
+    }
+
+    // If we get here, payment is still pending
+    return res.json({
+      success: true,
+      data: {
+        transactionId: transaction.transactionId,
+        status: transaction.status,
+        message: 'Payment still pending verification'
+      }
+    });
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Manual complete endpoint - for completing pending transactions without Flutterwave verification
+router.post('/complete/:transactionId', async (req, res, next) => {
+  try {
+    const { transactionId } = req.params;
+
+    const transaction = await prisma.transaction.findUnique({
+      where: { transactionId },
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Transaction not found', code: 'NOT_FOUND' }
+      });
+    }
+
+    if (transaction.status === 'completed') {
+      return res.json({
+        success: true,
+        data: {
+          transactionId: transaction.transactionId,
+          status: 'completed',
+          axcnhAmount: transaction.axcnhAmount,
+          txHash: transaction.txHash,
+          message: 'Transaction already completed'
+        }
+      });
+    }
+
+    // Process the transaction regardless of Flutterwave status
+    console.log(`Complete: Processing vault withdrawal for ${transaction.axcnhAmount} AxCNH to ${transaction.walletAddress}`);
+    
+    const txHash = await confluxService.withdrawFromVault(
+      transaction.walletAddress,
+      transaction.axcnhAmount,
+      'AxCNH'
+    );
+
+    await prisma.transaction.update({
+      where: { id: transaction.id },
+      data: {
+        status: 'completed',
+        txHash,
+        completedAt: new Date(),
+      },
+    });
+
+    // Update user volume
+    if (transaction.userId) {
+      await prisma.user.update({
+        where: { id: transaction.userId },
+        data: {
+          dailyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
+          monthlyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
+        },
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        transactionId: transaction.transactionId,
+        status: 'completed',
+        axcnhAmount: transaction.axcnhAmount,
+        txHash,
+      }
+    });
+
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

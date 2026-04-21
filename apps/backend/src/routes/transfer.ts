@@ -33,6 +33,72 @@ const transferSchema = z.object({
   note: z.string().optional(),
 });
 
+// Lookup recipient by phone or wallet address (public - no auth needed)
+router.post('/lookup', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { recipient } = req.body;
+    
+    if (!recipient) {
+      throw createError('Recipient is required', 400);
+    }
+
+    let recipientUser = null;
+    let recipientAddress = recipient;
+
+    // Check if it's an email
+    if (recipient.includes('@')) {
+      const hashedEmail = hashIdentifier(recipient);
+      recipientUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: recipient.toLowerCase() },
+            { hashedEmail: hashedEmail },
+          ],
+        },
+      });
+      if (recipientUser) {
+        recipientAddress = recipientUser.walletAddress;
+      }
+    }
+    // Check if it's a phone number
+    else if (recipient.startsWith('+') || /^\d{10,}$/.test(recipient)) {
+      const hashedPhone = hashIdentifier(recipient);
+      recipientUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { phoneNumber: recipient },
+            { hashedPhone: hashedPhone },
+          ],
+        },
+      });
+      if (recipientUser) {
+        recipientAddress = recipientUser.walletAddress;
+      }
+    }
+    // Check if it's already a wallet address
+    else if (recipient.startsWith('0x')) {
+      recipientAddress = recipient.toLowerCase();
+    }
+
+    if (!recipientUser && !recipient.startsWith('0x')) {
+      throw createError('Recipient not found. They must be registered on AxPesa.', 404, 'RECIPIENT_NOT_FOUND');
+    }
+
+    res.json({
+      success: true,
+      data: {
+        walletAddress: recipientAddress,
+        name: recipientUser?.name || null,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Apply auth middleware for protected routes
+router.use(authMiddleware);
+
 router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { recipient, amount, tokenSymbol, note } = transferSchema.parse(req.body);
@@ -127,6 +193,77 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
           : null,
         note,
         timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Confirm transfer after blockchain transaction
+router.post('/confirm', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { recipient, amount, txHash } = req.body;
+    const senderAddress = req.user?.walletAddress;
+
+    if (!senderAddress) {
+      throw createError('Wallet address not found', 400, 'NO_WALLET');
+    }
+
+    if (!txHash) {
+      throw createError('Transaction hash required', 400);
+    }
+
+    // Verify the blockchain transaction
+    const txVerified = await confluxService.verifyTransaction(txHash);
+    if (!txVerified) {
+      throw createError('Transaction not confirmed on blockchain', 400, 'TX_NOT_CONFIRMED');
+    }
+
+    // Resolve recipient address
+    let recipientAddress = recipient;
+    if (recipient.includes('@')) {
+      const hashedEmail = hashIdentifier(recipient);
+      const user = await prisma.user.findFirst({
+        where: { OR: [{ email: recipient.toLowerCase() }, { hashedEmail }] },
+      });
+      recipientAddress = user?.walletAddress || recipient;
+    } else if (recipient.startsWith('+') || /^\d{10,}$/.test(recipient)) {
+      const hashedPhone = hashIdentifier(recipient);
+      const user = await prisma.user.findFirst({
+        where: { OR: [{ phoneNumber: recipient }, { hashedPhone }] },
+      });
+      recipientAddress = user?.walletAddress || recipient;
+    }
+
+    // Record the transaction
+    const transaction = await prisma.transaction.create({
+      data: {
+        transactionId: `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'transfer',
+        userId: req.user?.userId,
+        walletAddress: senderAddress,
+        fiatAmount: 0,
+        fiatCurrency: 'AxCNH',
+        usdAmount: 0,
+        axcnhAmount: amount,
+        paymentMethod: 'wallet',
+        status: 'completed',
+        txHash,
+        rateUsed: 0,
+        feePercent: 0,
+        feeAmount: 0,
+        totalAmount: amount,
+        completedAt: new Date(),
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        transactionId: transaction.transactionId,
+        txHash,
+        amount,
       },
     });
   } catch (err) {

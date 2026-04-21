@@ -38,7 +38,6 @@ contract AxPesaVaultFactory {
     ) external returns (address) {
         AxPesaVault vault = new AxPesaVault(
             token,
-            signers,
             owner,
             tokenName
         );

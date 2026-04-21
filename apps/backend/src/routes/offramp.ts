@@ -195,9 +195,20 @@ router.post('/confirm/:transactionId', strictRateLimiter, async (req, res, next)
     if (!transaction) throw createError('Transaction not found', 404);
     if (transaction.status !== 'pending') throw createError('Transaction already processed', 400);
 
-    // For offramp, user deposits to vault from frontend
-    // Backend processes payout after deposit is confirmed
-    const hash = `offramp_${transactionId}`;
+    // Verify the blockchain transaction was successful
+    const txHash = req.body.txHash;
+    if (!txHash) {
+      throw createError('Transaction hash required', 400);
+    }
+
+    // Verify the transaction on blockchain
+    console.log(`Verifying blockchain transaction: ${txHash}`);
+    const txVerified = await confluxService.verifyTransaction(txHash);
+    if (!txVerified) {
+      throw createError('Token transfer not confirmed on blockchain', 400, 'TX_NOT_CONFIRMED');
+    }
+
+    console.log(`Blockchain transaction verified: ${txHash}`);
 
     let payoutResult;
     if (transaction.paymentMethod === 'mpesa') {
@@ -222,7 +233,7 @@ router.post('/confirm/:transactionId', strictRateLimiter, async (req, res, next)
       where: { id: transaction.id },
       data: {
         status: 'completed',
-        txHash: hash,
+        txHash: txHash,
         completedAt: new Date(),
       },
     });

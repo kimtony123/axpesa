@@ -494,8 +494,8 @@
       ]
     },
     "/home/tony/axpesa/apps/contracts/contracts/AxPesaVault.sol": {
-      "lastModificationDate": 1776218644922,
-      "contentHash": "519f80bae30d8e6f382ae06aa5d26cf4",
+      "lastModificationDate": 1776799656869,
+      "contentHash": "3b3e2a70cdd92ecf536e5d7a5382d06b",
       "sourceName": "contracts/AxPesaVault.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -534,8 +534,8 @@
       ]
     },
     "/home/tony/axpesa/apps/contracts/contracts/AxPesaVaultFactory.sol": {
-      "lastModificationDate": 1776200302744,
-      "contentHash": "aca07e312205ad1f2184642c29ed1d15",
+      "lastModificationDate": 1776802633667,
+      "contentHash": "a3b3e591d3ee9577d0c1952da7c74b97",
       "sourceName": "contracts/AxPesaVaultFactory.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -609,6 +609,46 @@
       ],
       "artifacts": [
         "USDTO"
+      ]
+    },
+    "/home/tony/axpesa/apps/contracts/contracts/AxPesaStaking.sol": {
+      "lastModificationDate": 1776380548439,
+      "contentHash": "13a44050a1e024b576c00cfee853bbbc",
+      "sourceName": "contracts/AxPesaStaking.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
+        "@openzeppelin/contracts/access/Ownable.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "AxPesaStaking"
       ]
     },
     "/home/tony/axpesa/apps/contracts/contracts/BasicCounter.sol": {
@@ -754,46 +794,6 @@
       "artifacts": [
         "AccessControl",
         "Ownable"
-      ]
-    },
-    "/home/tony/axpesa/apps/contracts/contracts/AxPesaStaking.sol": {
-      "lastModificationDate": 1776380548439,
-      "contentHash": "13a44050a1e024b576c00cfee853bbbc",
-      "sourceName": "contracts/AxPesaStaking.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
-        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
-        "@openzeppelin/contracts/access/Ownable.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.28"
-      ],
-      "artifacts": [
-        "AxPesaStaking"
       ]
     }
   }

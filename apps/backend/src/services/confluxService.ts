@@ -40,6 +40,10 @@ const ERC20_ABI = [
   'function approve(address spender, uint256 amount) returns (bool)',
 ];
 
+const MINTER_ABI = [
+  'function mint(address to, uint256 amount) returns (bool)',
+];
+
 let provider: ethers.JsonRpcProvider;
 let wallet: ethers.Wallet | null = null;
 
@@ -272,6 +276,38 @@ export const confluxService = {
     } catch (err: any) {
       console.error(`Error transferring tokens:`, err);
       throw new Error(`Failed to transfer: ${err.message || 'Unknown error'}`);
+    }
+  },
+
+  async mintTokens(toAddress: string, amount: number, tokenSymbol: string = 'AxCNH'): Promise<string> {
+    const tokenAddress = TOKEN_ADDRESSES[tokenSymbol as keyof typeof TOKEN_ADDRESSES];
+    if (!tokenAddress) {
+      throw new Error(`Token ${tokenSymbol} not configured`);
+    }
+    
+    const w = getWallet();
+    if (!w) {
+      throw new Error('Wallet not configured');
+    }
+    
+    const decimals = 18;
+    const amountWei = ethers.parseUnits(amount.toString(), decimals);
+    
+    const minterContract = new ethers.Contract(tokenAddress, MINTER_ABI, w);
+    
+    console.log(`🧪 Minting ${amount} ${tokenSymbol} to ${toAddress}`);
+    
+    try {
+      const tx = await minterContract.mint(toAddress, amountWei, { gasLimit: 100000 });
+      console.log(`📝 Mint transaction sent: ${tx.hash}`);
+      
+      const receipt = await tx.wait();
+      console.log(`✅ Mint confirmed: ${receipt.hash}`);
+      
+      return receipt.hash;
+    } catch (err: any) {
+      console.error(`Error minting tokens:`, err);
+      throw new Error(`Failed to mint: ${err.message || 'Unknown error'}`);
     }
   },
 

@@ -7,16 +7,16 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title AxPesaVault
- * @dev Vault for handling token deposits and withdrawals
+ * @dev Simplified Vault for handling token withdrawals
  * 
  * ARCHITECTURE:
- * - Owner (deployer/hot wallet): Can call withdraw() after Flutterwave confirms payment
- * - Multi-sig (2-of-3): For emergencies only (upgrade, emergency withdrawal)
- * - Users: Can deposit tokens to sell
+ * - Owner (deployer): Can call withdraw() to send tokens to users
+ * - Users: Receive tokens via withdraw() when they buy
  * 
- * LIQUIDITY MODEL:
- * - 90% of deposited tokens are LOCKED (staked)
- * - 10% held as LIQUIDITY for instant withdrawals
+ * SIMPLIFIED MODEL:
+ * - All tokens in vault are available for withdrawal
+ * - No liquidity pool, no locking
+ * - Direct transfers from vault to users
  */
 contract AxPesaVault is Ownable {
     using SafeERC20 for IERC20;
@@ -25,60 +25,18 @@ contract AxPesaVault is Ownable {
     IERC20 public token;
     string public tokenName;
     
-    // Liquidity settings
-    uint256 public constant LIQUIDITY_PERCENT = 10; // 10% available for withdrawals
-    uint256 public constant LOCKED_PERCENT = 90;    // 90% locked
-    
-    // Storage
-    mapping(address => uint256) public userDeposits;      // Total deposited by user
-    mapping(address => uint256) public userLocked;     // Locked amount per user
-    uint256 public totalDeposited;
-    uint256 public totalLocked;
-    
-    // Liquidity pool (10% of deposits)
-    uint256 public liquidityPool;
-    
-    // Multi-sig settings
-    uint256 public constant REQUIRED_SIGNATURES = 2;
-    uint256 public constant NUM_SIGNERS = 3;
-    address[3] public signers;
-    mapping(address => bool) public isSigner;
-    
-    // Withdrawal requests for multi-sig (for emergencies)
-    struct EmergencyWithdrawal {
-        address to;
-        uint256 amount;
-        uint256 approvalCount;
-        mapping(address => bool) approved;
-        bool executed;
-    }
-    
-    mapping(bytes32 => EmergencyWithdrawal) public emergencyWithdrawals;
-    bytes32[] public allEmergencyIds;
-    
-    // New vault for upgrades
-    address public newVault;
-    
     // Events
-    event Deposited(address indexed user, uint256 amount, uint256 locked, uint256 toLiquidity);
     event Withdrawn(address indexed user, uint256 amount);
-    event EmergencyWithdrawalRequested(bytes32 indexed id, address indexed to, uint256 amount);
-    event EmergencyWithdrawalApproved(bytes32 indexed id, address indexed approver);
-    event EmergencyWithdrawalExecuted(bytes32 indexed id);
-    event VaultUpgraded(address indexed newVault);
-    event LiquidityRecovered(uint256 amount);
-    event SignerUpdated(uint256 index, address oldSigner, address newSigner);
+    event TokenWithdrawn(address indexed to, uint256 amount);
 
     /**
      * @dev Constructor
      * @param _token Address of the ERC20 token this vault holds
-     * @param _signers Array of 3 admin signer addresses for multi-sig
-     * @param _owner Owner address (deployer/hot wallet - can call withdraw)
+     * @param _owner Owner address (deployer - can call withdraw)
      * @param _tokenName Human-readable name for the token
      */
     constructor(
         address _token,
-        address[3] memory _signers,
         address _owner,
         string memory _tokenName
     ) Ownable(_owner) {
@@ -87,78 +45,28 @@ contract AxPesaVault is Ownable {
         
         token = IERC20(_token);
         tokenName = _tokenName;
-        
-        // Set signers
-        for (uint256 i = 0; i < 3; i++) {
-            require(_signers[i] != address(0), "AxPesaVault: zero signer");
-            signers[i] = _signers[i];
-            isSigner[_signers[i]] = true;
-        }
     }
 
-    // =========================================================================
-    // USER FUNCTIONS
-    // =========================================================================
-
-    /**
-     * @dev User deposits tokens (SELL flow)
-     * @param amount Amount of tokens to deposit
-     * 
-     * - 90% is LOCKED (cannot be withdrawn by user)
-     * - 10% goes to liquidity pool
-     */
-    function deposit(uint256 amount) external {
-        require(amount > 0, "AxPesaVault: zero amount");
-        
-        // Calculate split
-        uint256 lockedAmount = (amount * LOCKED_PERCENT) / 100;
-        uint256 liquidityAmount = (amount * LIQUIDITY_PERCENT) / 100;
-        
-        // Transfer tokens from user
-        token.safeTransferFrom(msg.sender, address(this), amount);
-        
-        // Update state
-        userDeposits[msg.sender] += amount;
-        userLocked[msg.sender] += lockedAmount;
-        totalDeposited += amount;
-        totalLocked += lockedAmount;
-        liquidityPool += liquidityAmount;
-        
-        emit Deposited(msg.sender, amount, lockedAmount, liquidityAmount);
-    }
-
-    /**
-     * @dev Get user's deposit info
-     */
-    function getUserInfo(address user) external view returns (
-        uint256 totalDeposit,
-        uint256 lockedAmount,
-        uint256 withdrawable
-    ) {
-        withdrawable = userDeposits[user] - userLocked[user];
-        return (userDeposits[user], userLocked[user], withdrawable);
-    }
+    // Allow contract to receive CFX for gas fees
+    receive() external payable {}
 
     // =========================================================================
-    // WITHDRAW - ONLY OWNER (DEPLOYER/HOT WALLET)
+    // WITHDRAW FUNCTIONS
     // =========================================================================
 
     /**
      * @dev Withdraw tokens to user (BUY flow)
-     * @dev ONLY owner (deployer/hot wallet) can call this after Flutterwave confirms payment
+     * @dev ONLY owner (deployer) can call this after payment is confirmed
      * @param user Address to send tokens to
      * @param amount Amount of tokens to withdraw
      */
     function withdraw(address user, uint256 amount) external onlyOwner {
         require(user != address(0), "AxPesaVault: zero user address");
         require(amount > 0, "AxPesaVault: zero amount");
-        require(liquidityPool >= amount, "AxPesaVault: insufficient liquidity");
+        require(token.balanceOf(address(this)) >= amount, "AxPesaVault: insufficient balance");
         
         // Transfer from vault to user
         token.safeTransfer(user, amount);
-        
-        // Update liquidity
-        liquidityPool -= amount;
         
         emit Withdrawn(user, amount);
     }
@@ -174,101 +82,13 @@ contract AxPesaVault is Ownable {
             totalAmount += amounts[i];
         }
         
-        require(liquidityPool >= totalAmount, "AxPesaVault: insufficient liquidity");
+        require(token.balanceOf(address(this)) >= totalAmount, "AxPesaVault: insufficient balance");
         
         for (uint256 i = 0; i < users.length; i++) {
             require(users[i] != address(0), "AxPesaVault: zero address");
             token.safeTransfer(users[i], amounts[i]);
             emit Withdrawn(users[i], amounts[i]);
         }
-        
-        liquidityPool -= totalAmount;
-    }
-
-    // =========================================================================
-    // MULTI-SIG (2-OF-3) - EMERGENCY ONLY
-    // =========================================================================
-
-    /**
-     * @dev Request emergency withdrawal (requires multi-sig)
-     * @param to Address to send tokens to
-     * @param amount Amount of tokens to withdraw
-     */
-    function requestEmergencyWithdrawal(address to, uint256 amount) external {
-        require(isSigner[msg.sender], "AxPesaVault: not a signer");
-        require(to != address(0), "AxPesaVault: zero address");
-        require(amount > 0, "AxPesaVault: zero amount");
-        require(amount <= liquidityPool, "AxPesaVault: exceeds liquidity");
-        
-        bytes32 id = keccak256(abi.encodePacked(to, amount, block.timestamp));
-        
-        EmergencyWithdrawal storage withdrawal = emergencyWithdrawals[id];
-        withdrawal.to = to;
-        withdrawal.amount = amount;
-        withdrawal.approvalCount = 1;
-        withdrawal.approved[msg.sender] = true;
-        withdrawal.executed = false;
-        
-        allEmergencyIds.push(id);
-        
-        emit EmergencyWithdrawalRequested(id, to, amount);
-    }
-
-    /**
-     * @dev Approve emergency withdrawal (2-of-3 signers required)
-     */
-    function approveEmergencyWithdrawal(bytes32 id) external {
-        require(isSigner[msg.sender], "AxPesaVault: not a signer");
-        require(!emergencyWithdrawals[id].executed, "AxPesaVault: already executed");
-        require(!emergencyWithdrawals[id].approved[msg.sender], "AxPesaVault: already approved");
-        
-        EmergencyWithdrawal storage withdrawal = emergencyWithdrawals[id];
-        withdrawal.approved[msg.sender] = true;
-        withdrawal.approvalCount++;
-        
-        emit EmergencyWithdrawalApproved(id, msg.sender);
-        
-        // Execute if we have enough approvals
-        if (withdrawal.approvalCount >= REQUIRED_SIGNATURES) {
-            _executeEmergencyWithdrawal(id);
-        }
-    }
-
-    function _executeEmergencyWithdrawal(bytes32 id) internal {
-        EmergencyWithdrawal storage withdrawal = emergencyWithdrawals[id];
-        require(!withdrawal.executed, "AxPesaVault: already executed");
-        
-        withdrawal.executed = true;
-        liquidityPool -= withdrawal.amount;
-        token.safeTransfer(withdrawal.to, withdrawal.amount);
-        
-        emit EmergencyWithdrawalExecuted(id);
-    }
-
-    /**
-     * @dev Set new vault for upgrade
-     * @param _newVault Address of the new vault contract
-     */
-    function setNewVault(address _newVault) external {
-        require(isSigner[msg.sender] || msg.sender == owner(), "AxPesaVault: not authorized");
-        require(_newVault != address(0), "AxPesaVault: zero vault address");
-        newVault = _newVault;
-    }
-
-    /**
-     * @dev Upgrade vault - transfer all tokens to new vault
-     * @dev Requires owner + 1 signer approval
-     */
-    function upgradeVault() external {
-        require(newVault != address(0), "AxPesaVault: new vault not set");
-        require(msg.sender == owner() || isSigner[msg.sender], "AxPesaVault: not authorized");
-        
-        uint256 vaultBalance = token.balanceOf(address(this));
-        require(vaultBalance > 0, "AxPesaVault: nothing to transfer");
-        
-        token.safeTransfer(newVault, vaultBalance);
-        
-        emit VaultUpgraded(newVault);
     }
 
     // =========================================================================
@@ -276,20 +96,10 @@ contract AxPesaVault is Ownable {
     // =========================================================================
 
     /**
-     * @dev Get vault statistics
+     * @dev Get vault token balance
      */
-    function getVaultStats() external view returns (
-        uint256 _totalDeposited,
-        uint256 _totalLocked,
-        uint256 _liquidityPool,
-        uint256 _vaultBalance
-    ) {
-        return (
-            totalDeposited,
-            totalLocked,
-            liquidityPool,
-            token.balanceOf(address(this))
-        );
+    function getVaultBalance() external view returns (uint256) {
+        return token.balanceOf(address(this));
     }
 
     /**
@@ -299,19 +109,9 @@ contract AxPesaVault is Ownable {
         return _address == owner();
     }
 
-    /**
-     * @dev Get all signers
-     */
-    function getSigners() external view returns (address[3] memory) {
-        return signers;
-    }
-
-    /**
-     * @dev Check if emergency withdrawal is executed
-     */
-    function isEmergencyWithdrawalExecuted(bytes32 id) external view returns (bool) {
-        return emergencyWithdrawals[id].executed;
-    }
+    // =========================================================================
+    // EMERGENCY FUNCTIONS
+    // =========================================================================
 
     /**
      * @dev Recover accidentally sent tokens (not the vault token)
@@ -322,16 +122,20 @@ contract AxPesaVault is Ownable {
     }
 
     /**
-     * @dev Seed the liquidity pool with tokens from vault balance
-     * @dev Allows owner to use vault tokens for liquidity (e.g., faucet, initial liquidity)
-     * @param amount Amount of tokens to add to liquidity pool
+     * @dev Withdraw all remaining tokens to owner (emergency)
      */
-    function seedLiquidity(uint256 amount) external onlyOwner {
-        require(amount > 0, "AxPesaVault: zero amount");
-        require(token.balanceOf(address(this)) >= amount, "AxPesaVault: insufficient vault balance");
+    function emergencyWithdraw() external onlyOwner {
+        uint256 balance = token.balanceOf(address(this));
+        require(balance > 0, "AxPesaVault: nothing to withdraw");
         
-        liquidityPool += amount;
-        
-        emit LiquidityRecovered(amount);
+        token.safeTransfer(owner(), balance);
+        emit TokenWithdrawn(owner(), balance);
+    }
+
+    /**
+     * @dev Withdraw CFX balance to owner (for gas fees)
+     */
+    function withdrawCFX() external onlyOwner {
+        payable(owner()).transfer(address(this).balance);
     }
 }

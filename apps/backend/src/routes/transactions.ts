@@ -21,6 +21,34 @@ const authMiddleware = async (req: AuthenticatedRequest, res: any, next: any) =>
   }
 };
 
+// Public endpoint - no auth required (transactions are public for demo)
+router.get('/by-address', async (req, res, next) => {
+  try {
+    const { address } = req.query;
+
+    if (!address) {
+      throw createError('Wallet address required', 400, 'NO_ADDRESS');
+    }
+
+    const normalizedAddress = String(address).toLowerCase();
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        walletAddress: normalizedAddress,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    res.json({
+      success: true,
+      data: transactions,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Protected endpoints - require auth
 router.use(authMiddleware);
 
 router.get('/', async (req: AuthenticatedRequest, res, next) => {

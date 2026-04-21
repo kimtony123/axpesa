@@ -52,15 +52,15 @@ router.post('/claim', strictRateLimiter, async (req, res, next) => {
       );
     }
 
-    // Check vault stats (liquidity pool)
-    const vaultStats = await confluxService.getVaultStats('AxCNH');
+    // Check hot wallet (deployer) balance for faucet
+    const faucetBalance = await confluxService.getBalance(process.env.ADMIN_SIGNER_1 || '', 'AxCNH');
 
-    if (parseFloat(vaultStats.liquidityPool) < FAUCET_AMOUNT) {
+    if (parseFloat(faucetBalance) < FAUCET_AMOUNT) {
       throw createError('Faucet is empty. Please try again later.', 503, 'FAUCET_EMPTY');
     }
 
-    // Withdraw AxCNH from vault to user
-    const txHash = await confluxService.withdrawFromVault(walletAddress, FAUCET_AMOUNT, 'AxCNH');
+    // Mint AxCNH from hot wallet to user
+    const txHash = await confluxService.mintTokens(walletAddress, FAUCET_AMOUNT, 'AxCNH');
 
     // Record the claim
     await prisma.transaction.create({
@@ -162,19 +162,18 @@ router.get('/status/:walletAddress', async (req, res) => {
       }
     }
 
-    const vaultStats = await confluxService.getVaultStats('AxCNH');
-    const faucetBalance = parseFloat(vaultStats.liquidityPool);
+    const faucetBalance = await confluxService.getBalance(process.env.ADMIN_SIGNER_1 || '', 'AxCNH');
 
     res.json({
       success: true,
       data: {
         walletAddress,
-        canClaim: canClaim && faucetBalance >= FAUCET_AMOUNT,
+        canClaim: canClaim && parseFloat(faucetBalance) >= FAUCET_AMOUNT,
         timeUntilNextClaim: Math.ceil(timeUntilNextClaim / 1000 / 60), // minutes
         lastClaimedAmount: lastClaim?.axcnhAmount || null,
         lastClaimedAt: lastClaim?.createdAt || null,
         faucetAmount: FAUCET_AMOUNT,
-        faucetBalance,
+        faucetBalance: parseFloat(faucetBalance),
       },
     });
   } catch (error) {
@@ -185,6 +184,7 @@ router.get('/status/:walletAddress', async (req, res) => {
         timeUntilNextClaim: 0,
         faucetAmount: FAUCET_AMOUNT,
         faucetBalance: 0,
+        error: 'Unable to fetch faucet status',
       },
     });
   }

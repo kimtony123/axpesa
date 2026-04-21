@@ -92,6 +92,18 @@ class FlutterwaveService {
     mobile_number: string;
     reference: string;
   }) {
+    // Mock mode for testing - skip actual Flutterwave call if in test mode
+    if (process.env.NODE_ENV === 'development' && !process.env.FLUTTERWAVE_REAL_API) {
+      console.log(`[MOCK] M-PESA recharge: ${params.amount} KES to ${params.mobile_number}`);
+      return {
+        status: 'success',
+        data: {
+          id: `mock_${Date.now()}`,
+          tx_ref: params.reference,
+        }
+      };
+    }
+
     const payload = {
       network: params.network,
       amount: params.amount,

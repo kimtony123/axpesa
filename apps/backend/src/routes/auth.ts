@@ -13,6 +13,71 @@ const verifyWalletSchema = z.object({
   signature: z.string(),
 });
 
+const userRegisterSchema = z.object({
+  walletAddress: z.string().startsWith('0x', 'Invalid wallet address'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  phoneNumber: z.string().min(10, 'Phone number must be at least 10 digits'),
+  signature: z.string(),
+});
+
+router.post('/register', async (req, res, next) => {
+  try {
+    const { walletAddress, name, phoneNumber, signature } = userRegisterSchema.parse(req.body);
+    
+    // Verify signature to prove wallet ownership
+    const message = `Register to AxPesa: ${walletAddress.toLowerCase()}`;
+    let recoveredAddress;
+    try {
+      recoveredAddress = await recoverAddress(message, signature);
+    } catch {
+      throw createError('Invalid signature', 401, 'INVALID_SIGNATURE');
+    }
+    
+    if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+      throw createError('Signature verification failed', 401, 'INVALID_SIGNATURE');
+    }
+    
+    // Check if user already exists
+    const existing = await prisma.user.findUnique({ 
+      where: { walletAddress: walletAddress.toLowerCase() } 
+    });
+    if (existing) {
+      throw createError('Wallet already registered', 400, 'WALLET_EXISTS');
+    }
+    
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        walletAddress: walletAddress.toLowerCase(),
+        name,
+        phoneNumber,
+      },
+    });
+    
+    const token = jwt.sign(
+      { userId: user.id, walletAddress: user.walletAddress, type: 'wallet' },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '30d' }
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        token,
+        user: {
+          id: user.id,
+          walletAddress: user.walletAddress,
+          name: user.name,
+          phoneNumber: user.phoneNumber,
+          kycTier: user.kycTier,
+        },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/verify-wallet', async (req, res, next) => {
   try {
     const { address, signature } = verifyWalletSchema.parse(req.body);
@@ -33,12 +98,7 @@ router.post('/verify-wallet', async (req, res, next) => {
     let user = await prisma.user.findUnique({ where: { walletAddress: address.toLowerCase() } });
     
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          walletAddress: address.toLowerCase(),
-          phoneNumber: `wallet_${address.slice(2, 10)}`,
-        },
-      });
+      throw createError('User not registered. Please create an account first.', 404, 'USER_NOT_REGISTERED');
     }
 
     const token = jwt.sign(
@@ -54,6 +114,8 @@ router.post('/verify-wallet', async (req, res, next) => {
         user: {
           id: user.id,
           walletAddress: user.walletAddress,
+          name: user.name,
+          phoneNumber: user.phoneNumber,
           kycTier: user.kycTier,
         },
         type: 'wallet',
