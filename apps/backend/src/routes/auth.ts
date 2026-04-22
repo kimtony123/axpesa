@@ -24,8 +24,8 @@ router.post('/register', async (req, res, next) => {
   try {
     const { walletAddress, name, phoneNumber, signature } = userRegisterSchema.parse(req.body);
     
-    // Verify signature to prove wallet ownership
-    const message = `Register to AxPesa: ${walletAddress.toLowerCase()}`;
+    // Use original address (mixed case) to match frontend signing
+    const message = `Register to AxPesa: ${walletAddress}`;
     let recoveredAddress;
     try {
       recoveredAddress = await recoverAddress(message, signature);
@@ -82,7 +82,8 @@ router.post('/verify-wallet', async (req, res, next) => {
   try {
     const { address, signature } = verifyWalletSchema.parse(req.body);
     
-    const message = `Sign this message to login to AxPesa: ${address.toLowerCase()}`;
+    // Use original address (mixed case) to match frontend signing
+    const message = `Sign this message to login to AxPesa: ${address}`;
     
     let recoveredAddress: string;
     try {
