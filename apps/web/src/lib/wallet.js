@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 
 const MESSAGE_TO_SIGN = 'Sign this message to login to AxPesa: ';
+const REGISTER_MESSAGE = 'Register to AxPesa: ';
 
 export async function connectMetaMask() {
   if (typeof window === 'undefined' || !window.ethereum) {
@@ -18,6 +19,34 @@ export async function connectMetaMask() {
     const address = accounts[0];
     const signer = await provider.getSigner();
     const signature = await signer.signMessage(MESSAGE_TO_SIGN + address);
+
+    return { address, signature };
+  } catch (err) {
+    if (err.code === 4001) {
+      console.log('User rejected the request');
+    } else {
+      console.error('MetaMask connection error:', err);
+    }
+    return null;
+  }
+}
+
+export async function signRegisterMessage() {
+  if (typeof window === 'undefined' || !window.ethereum) {
+    throw new Error('MetaMask not detected! Please install MetaMask browser extension.');
+  }
+
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.send('eth_requestAccounts', []);
+    
+    if (!accounts || accounts.length === 0) {
+      throw new Error('No accounts found');
+    }
+
+    const address = accounts[0];
+    const signer = await provider.getSigner();
+    const signature = await signer.signMessage(REGISTER_MESSAGE + address);
 
     return { address, signature };
   } catch (err) {
