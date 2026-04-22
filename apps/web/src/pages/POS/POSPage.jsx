@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { QrCode, Loader2, Copy, X } from 'lucide-react';
+import { getApiUrl } from '../../lib/api';
 import './POSPage.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = getApiUrl();
 
 export default function POSPage() {
   const [loading, setLoading] = useState(true);

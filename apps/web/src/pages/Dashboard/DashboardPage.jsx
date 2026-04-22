@@ -4,9 +4,8 @@ import { Wallet, CreditCard, Coins, ArrowUpRight, ArrowDownLeft, LineChart, Copy
 import useWalletStore from '../../lib/walletStore';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import { getApiUrl } from '../../lib/api';
 import './DashboardPage.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('axpesa_token');
@@ -29,8 +28,8 @@ export default function DashboardPage() {
     setRefreshing(true);
     const authHeaders = getAuthHeaders();
     Promise.all([
-      fetch(`${API_URL}/api/wallet/balances?address=${address}`, { headers: authHeaders }).then(r => r.json()),
-      fetch(`${API_URL}/api/transactions/by-address?address=${address}`).then(r => r.json())
+      fetch(`${getApiUrl()}/api/wallet/balances?address=${address}`, { headers: authHeaders }).then(r => r.json()),
+      fetch(`${getApiUrl()}/api/transactions/by-address?address=${address}`).then(r => r.json())
     ]).then(([balData, txData]) => {
       if (balData.success && balData.data) {
         setBalances({
@@ -53,8 +52,8 @@ export default function DashboardPage() {
       setLoading(true);
       const authHeaders = getAuthHeaders();
       Promise.all([
-        fetch(`${API_URL}/api/wallet/balances?address=${address}`, { headers: authHeaders }).then(r => r.json()),
-        fetch(`${API_URL}/api/transactions/by-address?address=${address}`).then(r => r.json())
+        fetch(`${getApiUrl()}/api/wallet/balances?address=${address}`, { headers: authHeaders }).then(r => r.json()),
+        fetch(`${getApiUrl()}/api/transactions/by-address?address=${address}`).then(r => r.json())
       ]).then(([balData, txData]) => {
         console.log('Balance data:', balData);
         console.log('Transaction data:', txData);

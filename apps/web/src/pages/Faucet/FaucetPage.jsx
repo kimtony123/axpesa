@@ -4,6 +4,7 @@ import { Droplet, Wallet } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import useWalletStore from '../../lib/walletStore';
+import { getApiUrl } from '../../lib/api';
 import './FaucetPage.css';
 
 export default function FaucetPage() {
@@ -22,7 +23,7 @@ export default function FaucetPage() {
     if (!address) return;
     setChecking(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/faucet/status/${address}`);
+      const res = await fetch(`${getApiUrl()}/api/faucet/status/${address}`);
       const data = await res.json();
       if (data.success) { setStatus(data.data); }
       else if (data.error?.code === 'NO_RECENT_CLAIM') { setStatus({ canClaim: true, timeUntilNextClaim: 0, faucetBalance: 100 }); }
@@ -35,7 +36,7 @@ export default function FaucetPage() {
     if (!address || !status.canClaim) return;
     setLoading(true); setError(''); setSuccess('');
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/faucet/claim`, {
+      const res = await fetch(`${getApiUrl()}/api/faucet/claim`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ walletAddress: address }),
       });

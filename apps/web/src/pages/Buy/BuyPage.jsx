@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import useWalletStore from '../../lib/walletStore';
+import { getApiUrl } from '../../lib/api';
 import './BuyPage.css';
 
 function getAuthHeaders() {
@@ -26,7 +27,7 @@ export default function BuyPage() {
   const rate = rates.KES || 18.87;
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/onramp/rates`)
+    fetch(`${getApiUrl()}/api/onramp/rates`)
       .then(r => r.json())
       .then(d => {
         if (d.success && d.data?.rates) {
@@ -49,7 +50,7 @@ export default function BuyPage() {
     setError('');
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/onramp/initiate`, {
+      const res = await fetch(`${getApiUrl()}/api/onramp/initiate`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

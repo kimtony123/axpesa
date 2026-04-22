@@ -1,4 +1,13 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const getApiUrl = () => {
+  let url = import.meta.env.VITE_API_URL || '';
+  // Remove ALL trailing slashes
+  url = url.replace(/\/+$/, '');
+  // Fallback to Railway URL if empty or localhost
+  if (!url || url === 'http://localhost:8080' || url.includes('localhost')) {
+    return 'https://axpesa-production.up.railway.app';
+  }
+  return url;
+};
 
 function getAuthHeaders() {
   const token = localStorage.getItem('axpesa_token');
@@ -9,7 +18,7 @@ function getAuthHeaders() {
 }
 
 async function fetchApi(endpoint, options = {}) {
-  const url = `${API_URL}${endpoint}`;
+  const url = `${getApiUrl()}${endpoint}`;
   
   const config = {
     ...options,
@@ -102,5 +111,5 @@ export const api = {
   },
 };
 
-export { API_URL };
+export { getApiUrl, api };
 export default api;

@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
+import { getApiUrl } from '../../lib/api';
 import './PaymentStatusPage.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = getApiUrl();
 
 export default function PaymentStatusPage() {
   const { transactionId } = useParams();

@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Wallet } from 'lucide-react';
+import { Wallet, UserPlus } from 'lucide-react';
 import { connectMetaMask, isMetaMaskInstalled } from '../../lib/wallet';
 import useWalletStore from '../../lib/walletStore';
+import { getApiUrl } from '../../lib/api';
 import './LoginPage.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
@@ -24,7 +23,7 @@ export default function LoginPage() {
         setWallet(result.address);
         
         try {
-          const res = await fetch(`${API_URL}/api/auth/verify-wallet`, {
+          const res = await fetch(`${getApiUrl()}/api/auth/verify-wallet`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -45,7 +44,7 @@ export default function LoginPage() {
           } else {
             // Check if user is not registered
             if (data.error?.code === 'USER_NOT_REGISTERED') {
-              setError('Please register first to use AxPesa');
+              setError('You are not registered. Please sign up first.');
               setTimeout(() => navigate('/register'), 2000);
             } else {
               setError(data.error?.message || 'Verification failed');
@@ -88,25 +87,35 @@ export default function LoginPage() {
         <div className="auth-icon">
           <Wallet size={40} />
         </div>
-        <h1>Connect Wallet</h1>
-        <p>Sign in to your AxPesa account</p>
+        <h1>Welcome to AxPesa</h1>
+        <p>Buy, sell and transfer CNY through Conflux eSpace</p>
 
         {error && <div className="error-message">{error}</div>}
 
-        <button 
-          className="btn-primary connect-btn" 
-          onClick={handleConnectMetaMask}
-          disabled={isConnecting || !hasMetamask}
-        >
-          {isConnecting ? (
-            <>
-              <span className="spinner"></span>
-              Connecting...
-            </>
-          ) : (
-            'Connect MetaMask'
-          )}
-        </button>
+        <div className="auth-buttons">
+          <button 
+            className="btn-primary connect-btn" 
+            onClick={handleConnectMetaMask}
+            disabled={isConnecting || !hasMetamask}
+          >
+            {isConnecting ? (
+              <>
+                <span className="spinner"></span>
+                Connecting...
+              </>
+            ) : (
+              <>
+                <Wallet size={18} />
+                Login with Wallet
+              </>
+            )}
+          </button>
+
+          <Link to="/register" className="btn-secondary">
+            <UserPlus size={18} />
+            Sign Up
+          </Link>
+        </div>
 
         {!hasMetamask && (
           <p className="help-text">
@@ -118,7 +127,7 @@ export default function LoginPage() {
         )}
 
         <div className="auth-footer">
-          <p>New to AxPesa? <Link to="/register">Create an account</Link></p>
+          <p>By connecting, you agree to our Terms of Service</p>
         </div>
       </div>
     </div>

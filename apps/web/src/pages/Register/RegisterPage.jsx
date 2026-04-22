@@ -5,9 +5,8 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import useWalletStore from '../../lib/walletStore';
 import { connectMetaMask, isMetaMaskInstalled } from '../../lib/wallet';
+import { getApiUrl } from '../../lib/api';
 import './RegisterPage.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -39,7 +38,7 @@ export default function RegisterPage() {
       setWallet(result.address);
 
       // Register with backend
-      const res = await fetch(`${API_URL}/api/auth/register`, {
+      const res = await fetch(`${getApiUrl()}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

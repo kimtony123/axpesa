@@ -4,7 +4,7 @@ import { ArrowUpDown, Wallet } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import useWalletStore from '../../lib/walletStore';
-import { api } from '../../lib/api';
+import { api, getApiUrl } from '../../lib/api';
 import { transferTokens, waitForTransaction } from '../../lib/wallet';
 import './TransferPage.css';
 
@@ -43,7 +43,7 @@ export default function TransferPage() {
     try {
       // Step 1: Get recipient wallet address from backend (supports phone lookup)
       setError('Looking up recipient...');
-      const lookupRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/transfer/lookup`, {
+      const lookupRes = await fetch(`${getApiUrl()}/api/transfer/lookup`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export default function TransferPage() {
 
         // Step 3: Notify backend of successful transfer
         setError('Confirming transfer...');
-        const confirmRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/transfer/confirm`, {
+        const confirmRes = await fetch(`${getApiUrl()}/api/transfer/confirm`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',

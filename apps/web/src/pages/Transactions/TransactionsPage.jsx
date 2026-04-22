@@ -4,6 +4,7 @@ import { Wallet } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import useWalletStore from '../../lib/walletStore';
+import { getApiUrl } from '../../lib/api';
 import './TransactionsPage.css';
 
 export default function TransactionsPage() {
@@ -13,7 +14,7 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     if (address) {
-      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/transactions/by-address?address=${address}`)
+      fetch(`${getApiUrl()}/api/transactions/by-address?address=${address}`)
         .then(r => r.json()).then(d => d.success && setTransactions(d.data || [])).catch(() => {}).finally(() => setLoading(false));
     }
   }, [address]);
