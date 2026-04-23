@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Router as ExpressRouter } from 'express';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
@@ -8,21 +9,20 @@ import flutterwaveService from '../services/flutterwaveService.js';
 import { createError } from '../middleware/errorHandler.js';
 import { strictRateLimiter } from '../middleware/rateLimiter.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 const offrampSchema = z.object({
-  axcnhAmount: z.number().min(1),
-  payoutMethod: z.string(),
-  payoutDetails: z.object({
-    phoneNumber: z.string().optional(),
-    bankCode: z.string().optional(),
-    accountNumber: z.string().optional(),
+  axcnhamount: z.number().min(1),
+  payoutmethod: z.string(),
+  payoutdetails: z.object({
+    phonenumber: z.string().optional(),
+    bankcode: z.string().optional(),
+    accountnumber: z.string().optional(),
   }),
 });
 
 const FEE_PERCENT = 2.5;
 
-// Live rates relative to CNY (AxCNH = CNY)
 interface ExchangeRates {
   KES: number;
   UGX: number;
@@ -99,72 +99,69 @@ router.post('/initiate', strictRateLimiter, async (req, res, next) => {
     if (!auth?.startsWith('Bearer ')) throw createError('Unauthorized', 401);
     const decoded = jwt.verify(auth.split(' ')[1], process.env.JWT_SECRET || 'secret') as { merchantId?: string; userId?: string };
 
-    let walletAddress: string;
-    let userId: string | undefined;
-    let merchantId: string | undefined;
+    let walletaddress: string;
+    let userid: string | undefined;
+    let merchantid: string | undefined;
 
     if (decoded.merchantId) {
       const merchant = await prisma.merchant.findUnique({ where: { id: decoded.merchantId } });
       if (!merchant) throw createError('Merchant not found', 404);
-      walletAddress = merchant.walletAddress;
-      merchantId = merchant.id;
+      walletaddress = merchant.walletaddress;
+      merchantid = merchant.id;
     } else if (decoded.userId) {
       const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
       if (!user) throw createError('User not found', 404);
-      walletAddress = user.walletAddress;
-      userId = user.id;
+      walletaddress = user.walletaddress;
+      userid = user.id;
     } else {
       throw createError('Invalid token', 401);
     }
 
-    const balance = parseFloat(await confluxService.getBalance(walletAddress, 'AxCNH'));
-    if (balance < data.axcnhAmount) {
+    const balance = parseFloat(await confluxService.getBalance(walletaddress, 'AxCNH'));
+    if (balance < data.axcnhamount) {
       throw createError('Insufficient AxCNH balance', 400, 'INSUFFICIENT_BALANCE');
     }
 
-    // Get live rates
     const rates = await fetchLiveRates();
     
-    const currency = data.payoutMethod === 'mpesa' ? 'KES' : data.payoutMethod === 'airtel' ? 'UGX' : 'NGN';
+    const currency = data.payoutmethod === 'mpesa' ? 'KES' : data.payoutmethod === 'airtel' ? 'UGX' : 'NGN';
     const rate = rates[currency as keyof ExchangeRates];
     
-    // axcnhAmount is in AxCNH (CNY)
-    // Calculate fiat payout: AxCNH * rate = fiat amount
-    const fiatAmount = data.axcnhAmount * rate;
-    const feeAmount = fiatAmount * (FEE_PERCENT / 100);
-    const payoutAmount = fiatAmount - feeAmount;
+    const fiatamount = data.axcnhamount * rate;
+    const feeamount = fiatamount * (FEE_PERCENT / 100);
+    const payoutamount = fiatamount - feeamount;
 
-    const transactionId = `off_${uuidv4()}`;
+    const transactionid = `off_${uuidv4()}`;
 
     const transaction = await prisma.transaction.create({
       data: {
-        transactionId,
+        transactionid,
         type: 'offramp',
-        userId,
-        merchantId,
-        walletAddress,
-        fiatAmount: payoutAmount,
-        fiatCurrency: currency,
-        usdAmount: data.axcnhAmount,
-        axcnhAmount: data.axcnhAmount,
-        paymentMethod: data.payoutMethod,
+        userid,
+        merchantid,
+        walletaddress,
+        fiatamount: payoutamount,
+        fiatcurrency: currency,
+        usdamount: data.axcnhamount,
+        axcnhamount: data.axcnhamount,
+        paymentmethod: data.payoutmethod,
         status: 'pending',
-        rateUsed: rate,
-        feePercent: FEE_PERCENT,
-        feeAmount,
-        totalAmount: payoutAmount,
+        rateused: rate,
+        feepercent: FEE_PERCENT,
+        feeamount,
+        totalamount: payoutamount,
       },
     });
 
     res.json({
       success: true,
       data: {
-        transactionId,
-        axcnhAmount: data.axcnhAmount,
-        payoutAmount,
+        transactionid,
+        axcnhamount: data.axcnhamount,
+        payoutamount,
         rate: `1 AxCNH = ${rate.toFixed(2)} ${currency}`,
         currency,
-        fee: feeAmount,
+        fee: feeamount,
         status: 'pending',
       },
     });
@@ -183,11 +180,11 @@ router.post('/confirm/:transactionId', strictRateLimiter, async (req, res, next)
 
     const transaction = await prisma.transaction.findFirst({
       where: { 
-        transactionId,
+        transactionid: transactionId,
         type: 'offramp',
         OR: [
-          { merchantId: decoded.merchantId },
-          { userId: decoded.userId },
+          { merchantid: decoded.merchantId },
+          { userid: decoded.userId },
         ],
       },
     });
@@ -195,36 +192,34 @@ router.post('/confirm/:transactionId', strictRateLimiter, async (req, res, next)
     if (!transaction) throw createError('Transaction not found', 404);
     if (transaction.status !== 'pending') throw createError('Transaction already processed', 400);
 
-    // Verify the blockchain transaction was successful
-    const txHash = req.body.txHash;
-    if (!txHash) {
+    const txhash = req.body.txhash;
+    if (!txhash) {
       throw createError('Transaction hash required', 400);
     }
 
-    // Verify the transaction on blockchain
-    console.log(`Verifying blockchain transaction: ${txHash}`);
-    const txVerified = await confluxService.verifyTransaction(txHash);
+    console.log(`Verifying blockchain transaction: ${txhash}`);
+    const txVerified = await confluxService.verifyTransaction(txhash);
     if (!txVerified) {
       throw createError('Token transfer not confirmed on blockchain', 400, 'TX_NOT_CONFIRMED');
     }
 
-    console.log(`Blockchain transaction verified: ${txHash}`);
+    console.log(`Blockchain transaction verified: ${txhash}`);
 
     let payoutResult;
-    if (transaction.paymentMethod === 'mpesa') {
+    if (transaction.paymentmethod === 'mpesa') {
       payoutResult = await flutterwaveService.mobileMoneyRecharge({
         network: 'MPESA',
-        amount: transaction.fiatAmount,
-        mobile_number: req.body.phoneNumber || '',
+        amount: transaction.fiatamount,
+        mobile_number: req.body.phonenumber || '',
         reference: transactionId,
       });
     } else {
       payoutResult = await flutterwaveService.disburse({
-        account_bank: req.body.bankCode || '',
-        account_number: req.body.accountNumber || '',
-        amount: transaction.fiatAmount,
+        account_bank: req.body.bankcode || '',
+        account_number: req.body.accountnumber || '',
+        amount: transaction.fiatamount,
         narration: 'AxPesa AxCNH Sale',
-        currency: transaction.fiatCurrency,
+        currency: transaction.fiatcurrency,
         reference: transactionId,
       });
     }
@@ -233,8 +228,8 @@ router.post('/confirm/:transactionId', strictRateLimiter, async (req, res, next)
       where: { id: transaction.id },
       data: {
         status: 'completed',
-        txHash: txHash,
-        completedAt: new Date(),
+        txhash: txhash,
+        completedat: new Date(),
       },
     });
 

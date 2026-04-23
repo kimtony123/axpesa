@@ -1,10 +1,11 @@
 import { Router } from 'express';
+import type { Router as ExpressRouter } from 'express';
 import prisma from '../lib/prisma.js';
 import confluxService from '../services/confluxService.js';
 import { createError } from '../middleware/errorHandler.js';
 import { strictRateLimiter } from '../middleware/rateLimiter.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 const FAUCET_AMOUNT = 100; // 100 AxCNH per claim
 const CFX_FAUCET_AMOUNT = 0.1; // 0.1 CFX per claim (for gas fees)

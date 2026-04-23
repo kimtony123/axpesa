@@ -1,10 +1,11 @@
 import { Router } from 'express';
+import type { Router as ExpressRouter } from 'express';
 import crypto from 'crypto';
 import prisma from '../lib/prisma.js';
 import confluxService from '../services/confluxService.js';
 import flutterwaveService from '../services/flutterwaveService.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 const RECONCILIATION_THRESHOLD_MS = 30 * 60 * 1000;
 

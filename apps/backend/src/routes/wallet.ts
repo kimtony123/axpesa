@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import type { Router as ExpressRouter } from 'express';
 import { confluxService } from '../services/confluxService.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 // ============================================
 // PUBLIC ENDPOINTS - No Authentication Required

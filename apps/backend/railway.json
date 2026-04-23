@@ -2,8 +2,8 @@
   "$schema": "https://railway.app/schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "npm install && npx prisma generate && npm run build",
-    "startCommand": "npx prisma db push --accept-data-loss && node dist/index.js"
+    "buildCommand": "pnpm install && pnpm run build",
+    "startCommand": "node dist/index.js"
   },
   "deploy": {
     "numReplicas": 1,

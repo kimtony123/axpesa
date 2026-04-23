@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Router as ExpressRouter } from 'express';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../lib/prisma.js';
@@ -7,28 +8,25 @@ import confluxService from '../services/confluxService.js';
 import { createError } from '../middleware/errorHandler.js';
 import { strictRateLimiter } from '../middleware/rateLimiter.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 const onrampSchema = z.object({
-  fiatAmount: z.number().min(100).max(1000000),
-  fiatCurrency: z.string().default('KES'),
-  paymentMethod: z.string(),
-  walletAddress: z.string(),
-  phoneNumber: z.string().optional(),
+  fiatamount: z.number().min(100).max(1000000),
+  fiatcurrency: z.string().default('KES'),
+  paymentmethod: z.string(),
+  walletaddress: z.string(),
+  phonenumber: z.string().optional(),
   email: z.string().email().optional(),
 });
 
 const FEE_PERCENT = 2.0;
 
-// Live rates relative to CNY (AxCNH = CNY)
-// Base: 1 CNY = 1 AxCNH
-// Fetched dynamically from CoinGecko
 interface ExchangeRates {
-  KES: number; // KES per CNY (≈ 18.87)
-  UGX: number; // UGX per CNY
-  NGN: number; // NGN per CNY
-  USD: number; // USD per CNY
-  CNH: number; // CNH per CNY (always 1)
+  KES: number;
+  UGX: number;
+  NGN: number;
+  USD: number;
+  CNH: number;
 }
 
 let cachedRates: ExchangeRates = {
@@ -40,7 +38,7 @@ let cachedRates: ExchangeRates = {
 };
 
 let lastRateUpdate = 0;
-const RATE_CACHE_DURATION = 60000; // 1 minute
+const RATE_CACHE_DURATION = 60000;
 
 async function fetchLiveRates(): Promise<ExchangeRates> {
   const now = Date.now();
@@ -49,27 +47,14 @@ async function fetchLiveRates(): Promise<ExchangeRates> {
   }
 
   try {
-    // Fetch KES/CNY from CoinGecko
-    // CNY is not directly available, so we calculate from USD
-    // 1 USD ≈ 7.25 CNY
-    // 1 USD ≈ 157 KES
-    // Therefore 1 CNY ≈ 157/7.25 KES ≈ 21.66... but user said 18.87
-    
-    // Using a simpler approach - approximate rates based on user input
-    // 1 CNY ≈ 18.87 KES (user provided)
     const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether,usd-coin&vs_currencies=usd,kes,ngn,ugx', {
       headers: { 'Accept': 'application/json' }
     });
     
     if (res.ok) {
       const data = await res.json() as Record<string, Record<string, number>>;
-      
-      // USDC is our reference (pegged to USD)
       const usdcData = data['usd-coin'] || data.tether || {};
       
-      // Calculate rates
-      // 1 CNY = 1 AxCNH
-      // We approximate: 1 USD = 7.25 CNY (fixed)
       const CNY_PER_USD = 7.25;
       const usdToKes = usdcData.kes || 157;
       const usdToNgn = usdcData.ngn || 1550;
@@ -77,14 +62,14 @@ async function fetchLiveRates(): Promise<ExchangeRates> {
       
       cachedRates = {
         CNH: 1,
-        USD: 1 / CNY_PER_USD, // 0.138 CNY per USD
-        KES: usdToKes / CNY_PER_USD, // KES per CNY
-        NGN: usdToNgn / CNY_PER_USD, // NGN per CNY
-        UGX: usdToUgx / CNY_PER_USD, // UGX per CNY
+        USD: 1 / CNY_PER_USD,
+        KES: usdToKes / CNY_PER_USD,
+        NGN: usdToNgn / CNY_PER_USD,
+        UGX: usdToUgx / CNY_PER_USD,
       };
       
       lastRateUpdate = now;
-      console.log('✅ Exchange rates updated:', cachedRates);
+      console.log('Exchange rates updated:', cachedRates);
     }
   } catch (error) {
     console.error('Failed to fetch live rates, using cached:', error);
@@ -136,44 +121,41 @@ router.get('/rate/:currency', async (req, res) => {
 router.post('/initiate', strictRateLimiter, async (req, res, next) => {
   try {
     const data = onrampSchema.parse(req.body);
-    const transactionId = `tx_${uuidv4()}`;
+    const transactionid = `tx_${uuidv4()}`;
     
-    // Get live rates
     const rates = await fetchLiveRates();
-    const rate = rates[data.fiatCurrency as keyof ExchangeRates] || rates.KES;
+    const rate = rates[data.fiatcurrency as keyof ExchangeRates] || rates.KES;
     
-    // fiatAmount is in fiat currency (e.g., KES)
-    // We calculate how much AxCNH they get
-    const axcnhAmount = data.fiatAmount / rate;
-    const feeAmount = data.fiatAmount * (FEE_PERCENT / 100);
-    const totalAmount = data.fiatAmount + feeAmount;
+    const axcnhamount = data.fiatamount / rate;
+    const feeamount = data.fiatamount * (FEE_PERCENT / 100);
+    const totalamount = data.fiatamount + feeamount;
 
-    let userId: string | undefined;
-    if (data.walletAddress.startsWith('0x')) {
+    let userid: string | undefined;
+    if (data.walletaddress.startsWith('0x')) {
       const user = await prisma.user.upsert({
-        where: { walletAddress: data.walletAddress },
-        create: { walletAddress: data.walletAddress, phoneNumber: data.phoneNumber, email: data.email },
+        where: { walletaddress: data.walletaddress },
+        create: { walletaddress: data.walletaddress, phonenumber: data.phonenumber, email: data.email },
         update: {},
       });
-      userId = user.id;
+      userid = user.id;
     }
 
     const transaction = await prisma.transaction.create({
       data: {
-        transactionId,
+        transactionid,
         type: 'onramp',
-        userId,
-        walletAddress: data.walletAddress,
-        fiatAmount: data.fiatAmount,
-        fiatCurrency: data.fiatCurrency,
-        usdAmount: axcnhAmount, // Using axcnhAmount for consistency
-        axcnhAmount,
-        paymentMethod: data.paymentMethod,
+        userid,
+        walletaddress: data.walletaddress,
+        fiatamount: data.fiatamount,
+        fiatcurrency: data.fiatcurrency,
+        usdamount: axcnhamount,
+        axcnhamount,
+        paymentmethod: data.paymentmethod,
         status: 'pending',
-        rateUsed: rate,
-        feePercent: FEE_PERCENT,
-        feeAmount,
-        totalAmount,
+        rateused: rate,
+        feepercent: FEE_PERCENT,
+        feeamount,
+        totalamount,
       },
     });
 
@@ -181,29 +163,29 @@ router.post('/initiate', strictRateLimiter, async (req, res, next) => {
       mpesa: 'mpesa',
       card: 'card',
       bank_transfer: 'ussd',
-    }[data.paymentMethod] || 'mpesa';
+    }[data.paymentmethod] || 'mpesa';
 
     const flutterwavePayment = await flutterwaveService.initiatePayment({
-      txRef: transactionId,
-      amount: totalAmount,
-      currency: data.fiatCurrency,
+      txRef: transactionid,
+      amount: totalamount,
+      currency: data.fiatcurrency,
       paymentOptions,
-      phoneNumber: data.phoneNumber,
+      phoneNumber: data.phonenumber,
       email: data.email,
-      redirectUrl: `${process.env.APP_URL || 'http://localhost:3000'}/status/${transactionId}`,
-      description: `Buy ${axcnhAmount.toFixed(4)} AxCNH`,
+      redirectUrl: `${process.env.APP_URL || 'http://localhost:3000'}/status/${transactionid}`,
+      description: `Buy ${axcnhamount.toFixed(4)} AxCNH`,
     });
 
     res.json({
       success: true,
       data: {
-        transactionId,
+        transactionid,
         paymentLink: flutterwavePayment.data?.link,
         rate,
-        rateUnit: `1 AxCNH = ${rate.toFixed(2)} ${data.fiatCurrency}`,
-        estimatedAxcnh: axcnhAmount,
-        fee: feeAmount,
-        total: totalAmount,
+        rateUnit: `1 AxCNH = ${rate.toFixed(2)} ${data.fiatcurrency}`,
+        estimatedAxcnh: axcnhamount,
+        fee: feeamount,
+        total: totalamount,
         paymentOptions: flutterwavePayment.data?.payment_options,
       },
     });
@@ -217,8 +199,8 @@ router.get('/status/:transactionId', async (req, res, next) => {
     const { transactionId } = req.params;
     
     const transaction = await prisma.transaction.findUnique({
-      where: { transactionId },
-      include: { merchant: { select: { businessName: true } } },
+      where: { transactionid: transactionId },
+      include: { merchant: { select: { businessname: true } } },
     });
 
     if (!transaction) throw createError('Transaction not found', 404);
@@ -226,15 +208,15 @@ router.get('/status/:transactionId', async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        transactionId: transaction.transactionId,
+        transactionId: transaction.transactionid,
         status: transaction.status,
-        fiatAmount: transaction.fiatAmount,
-        fiatCurrency: transaction.fiatCurrency,
-        axcnhAmount: transaction.axcnhAmount,
-        paymentMethod: transaction.paymentMethod,
-        txHash: transaction.txHash,
-        createdAt: transaction.createdAt,
-        completedAt: transaction.completedAt,
+        fiatAmount: transaction.fiatamount,
+        fiatCurrency: transaction.fiatcurrency,
+        axcnhAmount: transaction.axcnhamount,
+        paymentMethod: transaction.paymentmethod,
+        txHash: transaction.txhash,
+        createdAt: transaction.createdat,
+        completedAt: transaction.completedat,
       },
     });
   } catch (err) {
@@ -247,15 +229,14 @@ router.post('/webhook/process/:transactionId', async (req, res, next) => {
     const { transactionId } = req.params;
     const { status, txHash, tokenSymbol } = req.body;
 
-    const transaction = await prisma.transaction.findUnique({ where: { transactionId } });
+    const transaction = await prisma.transaction.findUnique({ where: { transactionid: transactionId } });
     if (!transaction) throw createError('Transaction not found', 404);
 
     if (status === 'successful' && transaction.status === 'pending') {
-      // Use vault withdrawal for BUY flow
       const token = tokenSymbol || 'AxCNH';
       const hash = await confluxService.withdrawFromVault(
-        transaction.walletAddress, 
-        transaction.axcnhAmount,
+        transaction.walletaddress, 
+        transaction.axcnhamount,
         token
       );
       
@@ -263,17 +244,17 @@ router.post('/webhook/process/:transactionId', async (req, res, next) => {
         where: { id: transaction.id },
         data: {
           status: 'completed',
-          txHash: hash,
-          completedAt: new Date(),
+          txhash: hash,
+          completedat: new Date(),
         },
       });
 
-      if (transaction.userId) {
+      if (transaction.userid) {
         await prisma.user.update({
-          where: { id: transaction.userId },
+          where: { id: transaction.userid },
           data: {
-            dailyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
-            monthlyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
+            dailyvolume: { increment: transaction.usdamount || transaction.axcnhamount },
+            monthlyvolume: { increment: transaction.usdamount || transaction.axcnhamount },
           },
         });
       }
@@ -285,14 +266,13 @@ router.post('/webhook/process/:transactionId', async (req, res, next) => {
   }
 });
 
-// Verify endpoint - checks payment status and processes vault if successful
 router.get('/verify/:transactionId', async (req, res, next) => {
   try {
     const { transactionId } = req.params;
     const { flutterwave_tx_id, tx_ref } = req.query;
     
     const transaction = await prisma.transaction.findUnique({
-      where: { transactionId },
+      where: { transactionid: transactionId },
     });
 
     if (!transaction) {
@@ -302,38 +282,35 @@ router.get('/verify/:transactionId', async (req, res, next) => {
       });
     }
 
-    // If already completed, return success
     if (transaction.status === 'completed') {
       return res.json({
         success: true,
         data: {
-          transactionId: transaction.transactionId,
+          transactionId: transaction.transactionid,
           status: 'completed',
-          axcnhAmount: transaction.axcnhAmount,
-          txHash: transaction.txHash,
+          axcnhAmount: transaction.axcnhamount,
+          txHash: transaction.txhash,
         }
       });
     }
 
-    // If failed, return failed status
     if (transaction.status === 'failed' || transaction.status === 'cancelled') {
       return res.json({
         success: true,
         data: {
-          transactionId: transaction.transactionId,
+          transactionId: transaction.transactionid,
           status: transaction.status,
         }
       });
     }
 
-    // Verify with Flutterwave if transaction_id provided
     let isVerified = false;
     if (flutterwave_tx_id) {
       const verified = await flutterwaveService.verifyTransaction(String(flutterwave_tx_id));
       
       if (verified.status === 'success' && verified.data?.status === 'successful') {
         const verifiedAmount = parseFloat(verified.data.amount);
-        const expectedAmount = transaction.totalAmount;
+        const expectedAmount = transaction.totalamount;
         
         if (Math.abs(verifiedAmount - expectedAmount) <= 0.01) {
           isVerified = true;
@@ -343,13 +320,12 @@ router.get('/verify/:transactionId', async (req, res, next) => {
       }
     }
 
-    // If Flutterwave verification passed or no pending status, process the transaction
     if (isVerified || (transaction.status === 'pending' && !flutterwave_tx_id)) {
-      console.log(`Verify: Processing vault withdrawal for ${transaction.axcnhAmount} AxCNH to ${transaction.walletAddress}`);
+      console.log(`Verify: Processing vault withdrawal for ${transaction.axcnhamount} AxCNH to ${transaction.walletaddress}`);
       
       const txHash = await confluxService.withdrawFromVault(
-        transaction.walletAddress,
-        transaction.axcnhAmount,
+        transaction.walletaddress,
+        transaction.axcnhamount,
         'AxCNH'
       );
 
@@ -357,19 +333,18 @@ router.get('/verify/:transactionId', async (req, res, next) => {
         where: { id: transaction.id },
         data: {
           status: 'completed',
-          txHash,
-          flutterwaveRef: String(flutterwave_tx_id || tx_ref || ''),
-          completedAt: new Date(),
+          txhash: txHash,
+          flutterwaveref: String(flutterwave_tx_id || tx_ref || ''),
+          completedat: new Date(),
         },
       });
 
-      // Update user volume
-      if (transaction.userId) {
+      if (transaction.userid) {
         await prisma.user.update({
-          where: { id: transaction.userId },
+          where: { id: transaction.userid },
           data: {
-            dailyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
-            monthlyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
+            dailyvolume: { increment: transaction.usdamount || transaction.axcnhamount },
+            monthlyvolume: { increment: transaction.usdamount || transaction.axcnhamount },
           },
         });
       }
@@ -377,19 +352,18 @@ router.get('/verify/:transactionId', async (req, res, next) => {
       return res.json({
         success: true,
         data: {
-          transactionId: transaction.transactionId,
+          transactionId: transaction.transactionid,
           status: 'completed',
-          axcnhAmount: transaction.axcnhAmount,
+          axcnhAmount: transaction.axcnhamount,
           txHash,
         }
       });
     }
 
-    // If we get here, payment is still pending
     return res.json({
       success: true,
       data: {
-        transactionId: transaction.transactionId,
+        transactionId: transaction.transactionid,
         status: transaction.status,
         message: 'Payment still pending verification'
       }
@@ -400,13 +374,12 @@ router.get('/verify/:transactionId', async (req, res, next) => {
   }
 });
 
-// Manual complete endpoint - for completing pending transactions without Flutterwave verification
 router.post('/complete/:transactionId', async (req, res, next) => {
   try {
     const { transactionId } = req.params;
 
     const transaction = await prisma.transaction.findUnique({
-      where: { transactionId },
+      where: { transactionid: transactionId },
     });
 
     if (!transaction) {
@@ -420,21 +393,20 @@ router.post('/complete/:transactionId', async (req, res, next) => {
       return res.json({
         success: true,
         data: {
-          transactionId: transaction.transactionId,
+          transactionId: transaction.transactionid,
           status: 'completed',
-          axcnhAmount: transaction.axcnhAmount,
-          txHash: transaction.txHash,
+          axcnhAmount: transaction.axcnhamount,
+          txHash: transaction.txhash,
           message: 'Transaction already completed'
         }
       });
     }
 
-    // Process the transaction regardless of Flutterwave status
-    console.log(`Complete: Processing vault withdrawal for ${transaction.axcnhAmount} AxCNH to ${transaction.walletAddress}`);
+    console.log(`Complete: Processing vault withdrawal for ${transaction.axcnhamount} AxCNH to ${transaction.walletaddress}`);
     
     const txHash = await confluxService.withdrawFromVault(
-      transaction.walletAddress,
-      transaction.axcnhAmount,
+      transaction.walletaddress,
+      transaction.axcnhamount,
       'AxCNH'
     );
 
@@ -442,18 +414,17 @@ router.post('/complete/:transactionId', async (req, res, next) => {
       where: { id: transaction.id },
       data: {
         status: 'completed',
-        txHash,
-        completedAt: new Date(),
+        txhash: txHash,
+        completedat: new Date(),
       },
     });
 
-    // Update user volume
-    if (transaction.userId) {
+    if (transaction.userid) {
       await prisma.user.update({
-        where: { id: transaction.userId },
+        where: { id: transaction.userid },
         data: {
-          dailyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
-          monthlyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
+          dailyvolume: { increment: transaction.usdamount || transaction.axcnhamount },
+          monthlyvolume: { increment: transaction.usdamount || transaction.axcnhamount },
         },
       });
     }
@@ -461,9 +432,9 @@ router.post('/complete/:transactionId', async (req, res, next) => {
     return res.json({
       success: true,
       data: {
-        transactionId: transaction.transactionId,
+        transactionId: transaction.transactionid,
         status: 'completed',
-        axcnhAmount: transaction.axcnhAmount,
+        axcnhAmount: transaction.axcnhamount,
         txHash,
       }
     });

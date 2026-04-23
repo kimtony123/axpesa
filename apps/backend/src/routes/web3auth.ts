@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Router as ExpressRouter } from 'express';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma.js';
 import { verifyWeb3AuthToken } from '../services/web3authService.js';
@@ -6,7 +7,7 @@ import { createError } from '../middleware/errorHandler.js';
 import { hashIdentifier } from '../lib/hash.js';
 import { confluxService } from '../services/confluxService.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 const NEW_USER_CFX_AMOUNT = 0.1;
 
@@ -41,7 +42,7 @@ router.post('/verify', async (req, res, next) => {
 
     let isNewUser = false;
     let cfxSent = false;
-    let cfxTxHash = null;
+    let cfxTxHash: string | null = null;
 
     if (!user) {
       isNewUser = true;

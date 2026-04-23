@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import type { Router as ExpressRouter } from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../lib/prisma.js';
@@ -6,10 +7,10 @@ import { createError } from '../middleware/errorHandler.js';
 import { confluxService } from '../services/confluxService.js';
 import { hashIdentifier, maskIdentifier } from '../lib/hash.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 interface AuthRequest extends Request {
-  user?: { merchantId?: string; userId?: string; type: string; walletAddress?: string };
+  user?: { merchantId?: string; userId?: string; type: string; walletaddress?: string };
 }
 
 const authMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -29,11 +30,10 @@ router.use(authMiddleware);
 const transferSchema = z.object({
   recipient: z.string().min(1, 'Recipient is required'),
   amount: z.number().positive('Amount must be positive'),
-  tokenSymbol: z.string().default('AxCNH'),
+  tokensymbol: z.string().default('AxCNH'),
   note: z.string().optional(),
 });
 
-// Lookup recipient by phone or wallet address (public - no auth needed)
 router.post('/lookup', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { recipient } = req.body;
@@ -42,42 +42,39 @@ router.post('/lookup', async (req: Request, res: Response, next: NextFunction) =
       throw createError('Recipient is required', 400);
     }
 
-    let recipientUser = null;
-    let recipientAddress = recipient;
+    let recipientUser: any = null;
+    let recipientaddress = recipient;
 
-    // Check if it's an email
     if (recipient.includes('@')) {
-      const hashedEmail = hashIdentifier(recipient);
+      const hashedemail = hashIdentifier(recipient);
       recipientUser = await prisma.user.findFirst({
         where: {
           OR: [
             { email: recipient.toLowerCase() },
-            { hashedEmail: hashedEmail },
+            { hashedemail: hashedemail },
           ],
         },
       });
       if (recipientUser) {
-        recipientAddress = recipientUser.walletAddress;
+        recipientaddress = recipientUser.walletaddress;
       }
     }
-    // Check if it's a phone number
     else if (recipient.startsWith('+') || /^\d{10,}$/.test(recipient)) {
-      const hashedPhone = hashIdentifier(recipient);
+      const hashedphone = hashIdentifier(recipient);
       recipientUser = await prisma.user.findFirst({
         where: {
           OR: [
-            { phoneNumber: recipient },
-            { hashedPhone: hashedPhone },
+            { phonenumber: recipient },
+            { hashedphone: hashedphone },
           ],
         },
       });
       if (recipientUser) {
-        recipientAddress = recipientUser.walletAddress;
+        recipientaddress = recipientUser.walletaddress;
       }
     }
-    // Check if it's already a wallet address
     else if (recipient.startsWith('0x')) {
-      recipientAddress = recipient.toLowerCase();
+      recipientaddress = recipient.toLowerCase();
     }
 
     if (!recipientUser && !recipient.startsWith('0x')) {
@@ -87,7 +84,7 @@ router.post('/lookup', async (req: Request, res: Response, next: NextFunction) =
     res.json({
       success: true,
       data: {
-        walletAddress: recipientAddress,
+        walletaddress: recipientaddress,
         name: (recipientUser as any)?.name || null,
       },
     });
@@ -96,100 +93,97 @@ router.post('/lookup', async (req: Request, res: Response, next: NextFunction) =
   }
 });
 
-// Apply auth middleware for protected routes
-router.use(authMiddleware);
-
 router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { recipient, amount, tokenSymbol, note } = transferSchema.parse(req.body);
-    const senderAddress = req.user?.walletAddress;
+    const { recipient, amount, tokensymbol, note } = transferSchema.parse(req.body);
+    const senderaddress = req.user?.walletaddress;
 
-    if (!senderAddress) {
+    if (!senderaddress) {
       throw createError('Wallet address not found', 400, 'NO_WALLET');
     }
 
-    let recipientAddress = recipient;
-    let recipientUser = null;
+    let recipientaddress = recipient;
+    let recipientUser: any = null;
 
     if (recipient.includes('@')) {
-      const hashedEmail = hashIdentifier(recipient);
+      const hashedemail = hashIdentifier(recipient);
       recipientUser = await prisma.user.findFirst({
         where: {
           OR: [
             { email: recipient.toLowerCase() },
-            { hashedEmail: hashedEmail },
+            { hashedemail: hashedemail },
           ],
         },
       });
       if (!recipientUser) {
         throw createError('No AxPesa user found with this email', 404, 'RECIPIENT_NOT_FOUND');
       }
-      recipientAddress = recipientUser.walletAddress;
+      recipientaddress = recipientUser.walletaddress;
     } else if (recipient.startsWith('+') || /^\d{10,}$/.test(recipient)) {
-      const hashedPhone = hashIdentifier(recipient);
+      const hashedphone = hashIdentifier(recipient);
       recipientUser = await prisma.user.findFirst({
         where: {
           OR: [
-            { phoneNumber: recipient },
-            { hashedPhone: hashedPhone },
+            { phonenumber: recipient },
+            { hashedphone: hashedphone },
           ],
         },
       });
       if (!recipientUser) {
         throw createError('No AxPesa user found with this phone number', 404, 'RECIPIENT_NOT_FOUND');
       }
-      recipientAddress = recipientUser.walletAddress;
+      recipientaddress = recipientUser.walletaddress;
     } else if (!recipient.startsWith('0x') && !recipient.startsWith('cfx:')) {
       throw createError('Invalid recipient format', 400, 'INVALID_RECIPIENT');
     }
 
-    if (recipientAddress.toLowerCase() === senderAddress.toLowerCase()) {
+    if (recipientaddress.toLowerCase() === senderaddress.toLowerCase()) {
       throw createError('Cannot transfer to yourself', 400, 'SELF_TRANSFER');
     }
 
-    const senderBalance = await confluxService.getBalance(senderAddress, tokenSymbol);
+    const senderBalance = await confluxService.getBalance(senderaddress, tokensymbol);
     if (parseFloat(senderBalance) < amount) {
       throw createError('Insufficient balance', 400, 'INSUFFICIENT_BALANCE');
     }
 
-    let txHash: string;
+    let txhash: string;
     try {
-      txHash = await confluxService.transferTokens(recipientAddress, amount, tokenSymbol);
+      txhash = await confluxService.transferTokens(recipientaddress, amount, tokensymbol);
     } catch (err: any) {
       throw createError(err.message || 'Transfer failed', 500, 'TRANSFER_FAILED');
     }
 
     const transaction = await prisma.transaction.create({
       data: {
-        transactionId: `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        transactionid: `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: 'transfer',
-        userId: req.user?.userId,
-        walletAddress: senderAddress,
-        fiatAmount: 0,
-        fiatCurrency: tokenSymbol,
-        usdAmount: 0,
-        axcnhAmount: amount,
-        paymentMethod: 'wallet',
+        userid: req.user?.userId,
+        walletaddress: senderaddress,
+        fiatamount: 0,
+        fiatcurrency: tokensymbol,
+        usdamount: 0,
+        axcnhamount: amount,
+        paymentmethod: 'wallet',
         status: 'completed',
-        txHash,
-        rateUsed: 0,
-        feePercent: 0,
-        feeAmount: 0,
-        totalAmount: amount,
-        completedAt: new Date(),
+        txhash,
+        rateused: 0,
+        feepercent: 0,
+        feeamount: 0,
+        totalamount: amount,
+        completedat: new Date(),
       },
     });
 
     res.json({
       success: true,
       data: {
-        transactionId: transaction.transactionId,
-        txHash,
+        transactionId: transaction.transactionid,
+        txhash,
         amount,
-        tokenSymbol,
-        recipient: recipientAddress,
+        tokensymbol,
+        recipient: recipientaddress,
         recipientMasked: recipientUser 
-          ? (recipientUser.email ? maskIdentifier(recipientUser.email) : maskIdentifier(recipientUser.phoneNumber || ''))
+          ? (recipientUser.email ? maskIdentifier(recipientUser.email) : maskIdentifier(recipientUser.phonenumber || ''))
           : null,
         note,
         timestamp: new Date().toISOString(),
@@ -200,69 +194,65 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
   }
 });
 
-// Confirm transfer after blockchain transaction
 router.post('/confirm', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { recipient, amount, txHash } = req.body;
-    const senderAddress = req.user?.walletAddress;
+    const { recipient, amount, txhash } = req.body;
+    const senderaddress = req.user?.walletaddress;
 
-    if (!senderAddress) {
+    if (!senderaddress) {
       throw createError('Wallet address not found', 400, 'NO_WALLET');
     }
 
-    if (!txHash) {
+    if (!txhash) {
       throw createError('Transaction hash required', 400);
     }
 
-    // Verify the blockchain transaction
-    const txVerified = await confluxService.verifyTransaction(txHash);
+    const txVerified = await confluxService.verifyTransaction(txhash);
     if (!txVerified) {
       throw createError('Transaction not confirmed on blockchain', 400, 'TX_NOT_CONFIRMED');
     }
 
-    // Resolve recipient address
-    let recipientAddress = recipient;
+    let recipientaddress = recipient;
     if (recipient.includes('@')) {
-      const hashedEmail = hashIdentifier(recipient);
+      const hashedemail = hashIdentifier(recipient);
       const user = await prisma.user.findFirst({
-        where: { OR: [{ email: recipient.toLowerCase() }, { hashedEmail }] },
+        where: { OR: [{ email: recipient.toLowerCase() }, { hashedemail }] },
       });
-      recipientAddress = user?.walletAddress || recipient;
+      recipientaddress = user?.walletaddress || recipient;
     } else if (recipient.startsWith('+') || /^\d{10,}$/.test(recipient)) {
-      const hashedPhone = hashIdentifier(recipient);
+      const hashedphone = hashIdentifier(recipient);
       const user = await prisma.user.findFirst({
-        where: { OR: [{ phoneNumber: recipient }, { hashedPhone }] },
+        where: { OR: [{ phonenumber: recipient }, { hashedphone }] },
       });
-      recipientAddress = user?.walletAddress || recipient;
+      recipientaddress = user?.walletaddress || recipient;
     }
 
-    // Record the transaction
     const transaction = await prisma.transaction.create({
       data: {
-        transactionId: `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        transactionid: `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: 'transfer',
-        userId: req.user?.userId,
-        walletAddress: senderAddress,
-        fiatAmount: 0,
-        fiatCurrency: 'AxCNH',
-        usdAmount: 0,
-        axcnhAmount: amount,
-        paymentMethod: 'wallet',
+        userid: req.user?.userId,
+        walletaddress: senderaddress,
+        fiatamount: 0,
+        fiatcurrency: 'AxCNH',
+        usdamount: 0,
+        axcnhamount: amount,
+        paymentmethod: 'wallet',
         status: 'completed',
-        txHash,
-        rateUsed: 0,
-        feePercent: 0,
-        feeAmount: 0,
-        totalAmount: amount,
-        completedAt: new Date(),
+        txhash,
+        rateused: 0,
+        feepercent: 0,
+        feeamount: 0,
+        totalamount: amount,
+        completedat: new Date(),
       },
     });
 
     res.json({
       success: true,
       data: {
-        transactionId: transaction.transactionId,
-        txHash,
+        transactionId: transaction.transactionid,
+        txhash,
         amount,
       },
     });
@@ -279,15 +269,15 @@ router.get('/history', async (req: AuthRequest, res: Response, next: NextFunctio
     const where: any = {
       type: 'transfer',
       OR: [
-        { userId: req.user?.userId },
-        { walletAddress: req.user?.walletAddress },
+        { userid: req.user?.userId },
+        { walletaddress: req.user?.walletaddress },
       ],
     };
 
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdat: 'desc' },
         skip,
         take: Number(limit),
       }),
@@ -313,23 +303,23 @@ router.get('/history', async (req: AuthRequest, res: Response, next: NextFunctio
 
 router.get('/balance/:tokenSymbol?', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const tokenSymbol = (req.params.tokenSymbol || 'AxCNH') as string;
-    const senderAddress = req.user?.walletAddress;
+    const tokensymbol = (req.params.tokensymbol || 'AxCNH') as string;
+    const senderaddress = req.user?.walletaddress;
 
-    if (!senderAddress) {
+    if (!senderaddress) {
       throw createError('Wallet address not found', 400, 'NO_WALLET');
     }
 
-    const balance = await confluxService.getBalance(senderAddress, tokenSymbol);
-    const cfxBalance = await confluxService.getCFXBalance(senderAddress);
+    const balance = await confluxService.getBalance(senderaddress, tokensymbol);
+    const cfxBalance = await confluxService.getCFXBalance(senderaddress);
 
     res.json({
       success: true,
       data: {
         balance,
         cfxBalance,
-        tokenSymbol,
-        address: senderAddress,
+        tokensymbol,
+        address: senderaddress,
       },
     });
   } catch (err) {

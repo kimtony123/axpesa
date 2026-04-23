@@ -19,10 +19,7 @@ import { rateLimiter } from './middleware/rateLimiter.js';
 config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
-
-// Trust Railway proxy
-app.set('trust proxy', 1);
+const PORT = Number(process.env.PORT) || 8080;
 
 app.use(helmet());
 
@@ -31,6 +28,11 @@ const allowedOrigins = (
   [
     'http://localhost:3000',
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:3000',
+    'https://axpesa-web.vercel.app',
+    'https://axpesa-production.up.railway.app',
     process.env.APP_URL,
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
   ].filter((origin): origin is string => typeof origin === 'string' && origin.length > 0)
@@ -39,6 +41,8 @@ const allowedOrigins = (
 app.use(cors({
   origin: allowedOrigins.length > 0 ? allowedOrigins : true,
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 app.use(express.json());
 app.use(rateLimiter);

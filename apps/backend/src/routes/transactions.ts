@@ -1,9 +1,10 @@
 import { Router } from 'express';
+import type { Router as ExpressRouter } from 'express';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma.js';
 import { createError } from '../middleware/errorHandler.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 interface AuthenticatedRequest extends ReturnType<typeof Router.prototype.handle> {
   user?: { merchantId?: string; userId?: string; type: string };
@@ -21,7 +22,6 @@ const authMiddleware = async (req: AuthenticatedRequest, res: any, next: any) =>
   }
 };
 
-// Public endpoint - no auth required (transactions are public for demo)
 router.get('/by-address', async (req, res, next) => {
   try {
     const { address } = req.query;
@@ -33,9 +33,9 @@ router.get('/by-address', async (req, res, next) => {
     const normalizedAddress = String(address).toLowerCase();
     const transactions = await prisma.transaction.findMany({
       where: {
-        walletAddress: normalizedAddress,
+        walletaddress: normalizedAddress,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdat: 'desc' },
       take: 50,
     });
 
@@ -48,7 +48,6 @@ router.get('/by-address', async (req, res, next) => {
   }
 });
 
-// Protected endpoints - require auth
 router.use(authMiddleware);
 
 router.get('/', async (req: AuthenticatedRequest, res, next) => {
@@ -57,15 +56,15 @@ router.get('/', async (req: AuthenticatedRequest, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
 
     const where: any = {};
-    if (req.user?.merchantId) where.merchantId = req.user.merchantId;
-    if (req.user?.userId) where.userId = req.user.userId;
+    if (req.user?.merchantId) where.merchantid = req.user.merchantId;
+    if (req.user?.userId) where.userid = req.user.userId;
     if (status) where.status = status;
     if (type) where.type = type;
 
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdat: 'desc' },
         skip,
         take: Number(limit),
       }),
@@ -93,10 +92,10 @@ router.get('/:transactionId', async (req: AuthenticatedRequest, res, next) => {
   try {
     const transaction = await prisma.transaction.findFirst({
       where: {
-        transactionId: req.params.transactionId,
+        transactionid: req.params.transactionId,
         OR: [
-          { merchantId: req.user?.merchantId },
-          { userId: req.user?.userId },
+          { merchantid: req.user?.merchantId },
+          { userid: req.user?.userId },
         ],
       },
     });
