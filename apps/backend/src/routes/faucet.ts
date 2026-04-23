@@ -13,11 +13,13 @@ const CLAIM_COOLDOWN = 3600000;
 
 router.post('/claim', strictRateLimiter, async (req, res, next) => {
   try {
-    const { walletAddress } = req.body;
+    const { walletaddress } = req.body;
 
-    if (!walletAddress || !walletAddress.startsWith('0x')) {
+    if (!walletaddress || !walletaddress.startsWith('0x')) {
       throw createError('Invalid wallet address', 400);
     }
+
+    const walletAddress = walletaddress.toLowerCase();
 
     let user = await prisma.user.findUnique({
       where: { walletaddress: walletAddress },
@@ -95,15 +97,15 @@ router.post('/claim', strictRateLimiter, async (req, res, next) => {
 
 router.post('/claim-cfx', strictRateLimiter, async (req, res, next) => {
   try {
-    const { walletAddress } = req.body;
+    const { walletaddress } = req.body;
 
-    if (!walletAddress || (!walletAddress.startsWith('0x') && !walletAddress.startsWith('cfx:'))) {
+    if (!walletaddress || (!walletaddress.startsWith('0x') && !walletaddress.startsWith('cfx:'))) {
       throw createError('Invalid wallet address', 400);
     }
 
-    const normalizedAddress = walletAddress.startsWith('cfx:') 
-      ? walletAddress 
-      : walletAddress;
+    const normalizedAddress = walletaddress.startsWith('cfx:') 
+      ? walletaddress.toLowerCase()
+      : walletaddress.toLowerCase();
 
     const cfxBalance = await confluxService.getCFXBalance(normalizedAddress);
     
@@ -133,9 +135,10 @@ router.post('/claim-cfx', strictRateLimiter, async (req, res, next) => {
   }
 });
 
-router.get('/status/:walletAddress', async (req, res) => {
+router.get('/status/:walletaddress', async (req, res) => {
   try {
-    const { walletAddress } = req.params;
+    const { walletaddress } = req.params;
+    const walletAddress = walletaddress.toLowerCase();
 
     const lastClaim = await prisma.transaction.findFirst({
       where: {

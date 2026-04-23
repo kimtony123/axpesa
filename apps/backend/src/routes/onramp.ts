@@ -227,13 +227,13 @@ router.get('/status/:transactionId', async (req, res, next) => {
 router.post('/webhook/process/:transactionId', async (req, res, next) => {
   try {
     const { transactionId } = req.params;
-    const { status, txHash, tokenSymbol } = req.body;
+    const { status, txhash, tokensymbol } = req.body;
 
     const transaction = await prisma.transaction.findUnique({ where: { transactionid: transactionId } });
     if (!transaction) throw createError('Transaction not found', 404);
 
     if (status === 'successful' && transaction.status === 'pending') {
-      const token = tokenSymbol || 'AxCNH';
+      const token = tokensymbol || 'AxCNH';
       const hash = await confluxService.withdrawFromVault(
         transaction.walletaddress, 
         transaction.axcnhamount,
