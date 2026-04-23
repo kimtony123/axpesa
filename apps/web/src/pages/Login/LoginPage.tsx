@@ -48,15 +48,15 @@ export default function LoginPage() {
               setError(data.error?.message || 'Verification failed');
             }
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error('Backend verification failed:', err);
-          setError('Backend verification failed');
+          setError(err?.message || 'Backend verification failed');
         }
       } else {
         setError('Failed to connect wallet');
       }
-    } catch (err) {
-      setError(err.message || 'Failed to connect wallet');
+    } catch (err: any) {
+      setError(err?.message || 'Failed to connect wallet');
     } finally {
       setIsConnecting(false);
     }

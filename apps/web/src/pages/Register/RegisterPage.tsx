@@ -39,9 +39,9 @@ export default function RegisterPage() {
       const data = await fetchApi('/api/auth/user-register', {
         method: 'POST',
         body: JSON.stringify({
-          walletAddress: result.address,
+          walletaddress: result.address,
           name,
-          phoneNumber: phone,
+          phonenumber: phone,
           signature: result.signature,
         }),
       });
@@ -53,9 +53,9 @@ export default function RegisterPage() {
       } else {
         setError(data.error?.message || 'Registration failed');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Registration error:', err);
-      setError('Network error. Please try again.');
+      setError(err?.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }

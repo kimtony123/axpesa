@@ -10,10 +10,10 @@ export default function MerchantRegisterPage() {
   const [form, setForm] = useState({
     email: '',
     password: '',
-    businessName: '',
-    businessType: 'retail',
-    phoneNumber: '',
-    walletAddress: '',
+    businessname: '',
+    businesstype: 'retail',
+    phonenumber: '',
+    walletaddress: '',
   });
   const [error, setError] = useState('');
 
@@ -31,8 +31,8 @@ export default function MerchantRegisterPage() {
       } else {
         setError(data.error?.message || 'Registration failed');
       }
-    } catch (err) {
-      setError('Network error. Please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -75,8 +75,8 @@ export default function MerchantRegisterPage() {
             <label>Business Name</label>
             <input
               type="text"
-              value={form.businessName}
-              onChange={e => setForm({ ...form, businessName: e.target.value })}
+              value={form.businessname}
+              onChange={e => setForm({ ...form, businessname: e.target.value })}
               className="input"
               required
             />
@@ -84,8 +84,8 @@ export default function MerchantRegisterPage() {
           <div className="form-group">
             <label>Business Type</label>
             <select
-              value={form.businessType}
-              onChange={e => setForm({ ...form, businessType: e.target.value })}
+              value={form.businesstype}
+              onChange={e => setForm({ ...form, businesstype: e.target.value })}
               className="select"
             >
               <option value="retail">Retail Shop</option>
@@ -100,8 +100,8 @@ export default function MerchantRegisterPage() {
             <label>Phone Number</label>
             <input
               type="tel"
-              value={form.phoneNumber}
-              onChange={e => setForm({ ...form, phoneNumber: e.target.value })}
+              value={form.phonenumber}
+              onChange={e => setForm({ ...form, phonenumber: e.target.value })}
               className="input"
               placeholder="254700123456"
               required
@@ -111,8 +111,8 @@ export default function MerchantRegisterPage() {
             <label>Conflux Wallet Address</label>
             <input
               type="text"
-              value={form.walletAddress}
-              onChange={e => setForm({ ...form, walletAddress: e.target.value })}
+              value={form.walletaddress}
+              onChange={e => setForm({ ...form, walletaddress: e.target.value })}
               className="input font-mono"
               placeholder="cfx: or 0x..."
               required

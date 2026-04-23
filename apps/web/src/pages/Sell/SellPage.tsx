@@ -49,10 +49,10 @@ export default function SellPage() {
     let txHash = null;
     try {
       const initData = await api.offramp.initiate({
-        axcnhAmount: sellAmount,
-        payoutMethod: 'mpesa',
-        payoutDetails: {
-          phoneNumber: phone,
+        axcnhamount: sellAmount,
+        payoutmethod: 'mpesa',
+        payoutdetails: {
+          phonenumber: phone,
         },
       });
 
@@ -88,8 +88,8 @@ export default function SellPage() {
 
       setError('Confirming transaction...');
       const confirmData = await api.offramp.confirm(initData.data.transactionId, {
-        txHash: txHash,
-        phoneNumber: phone,
+        txhash: txHash,
+        phonenumber: phone,
       });
 
       if (confirmData.success) {
@@ -99,9 +99,9 @@ export default function SellPage() {
       } else {
         setError(confirmData.error?.message || 'Failed to confirm transaction');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Sell error:', err);
-      setError('Network error. Please try again.');
+      setError(err?.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }

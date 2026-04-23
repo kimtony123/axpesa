@@ -37,11 +37,11 @@ export default function FaucetPage() {
     try {
       const data = await fetchApi('/api/faucet/claim', {
         method: 'POST',
-        body: JSON.stringify({ walletAddress: address }),
+        body: JSON.stringify({ walletaddress: address }),
       });
       if (data.success) { setSuccess('Claimed 100 AxCNH!'); if (data.data.txhash) window.open(`https://evmtestnet.confluxscan.org/tx/${data.data.txhash}`, '_blank'); checkStatus(); }
       else { setError(data.error?.message || 'Failed to claim'); }
-    } catch { setError('Network error.'); }
+    } catch (err: any) { setError(err?.message || 'Network error.'); }
     setLoading(false);
   };
 

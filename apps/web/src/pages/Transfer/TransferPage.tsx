@@ -72,7 +72,7 @@ export default function TransferPage() {
           body: JSON.stringify({ 
             recipient,
             amount: transferAmount,
-            txHash,
+            txhash: txHash,
           }),
         });
         

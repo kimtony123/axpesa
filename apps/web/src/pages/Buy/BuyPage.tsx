@@ -40,13 +40,13 @@ export default function BuyPage() {
       const data = await fetchApi('/api/onramp/initiate', {
         method: 'POST',
         body: JSON.stringify({
-          fiatAmount: parseFloat(amount),
-          fiatCurrency: currency,
-          paymentMethod,
-          walletAddress: address,
-          phoneNumber: phone,
+          fiatamount: parseFloat(amount),
+          fiatcurrency: currency,
+          paymentmethod: paymentMethod,
+          walletaddress: address,
+          phonenumber: phone,
           email: email || undefined,
-          tokenSymbol: 'AxCNH',
+          tokensymbol: 'AxCNH',
         }),
       });
       
@@ -57,8 +57,8 @@ export default function BuyPage() {
       } else {
         setError(data.error?.message || 'Failed to initiate payment');
       }
-    } catch (err) {
-      setError('Network error. Please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }

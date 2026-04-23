@@ -32,6 +32,7 @@ const allowedOrigins = (
     'http://127.0.0.1:8080',
     'http://127.0.0.1:3000',
     'https://axpesa-web.vercel.app',
+    'https://axpesa.vercel.app',
     'https://axpesa-production.up.railway.app',
     process.env.APP_URL,
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
