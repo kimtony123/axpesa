@@ -1,4 +1,4 @@
-FROM node:20-slim
+FROM node:20-bullseye
 
 WORKDIR /app
 
@@ -6,9 +6,17 @@ RUN apt-get update -y && apt-get install -y openssl libssl1.1 && rm -rf /var/lib
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY . .
+ENV CI=true
 
-RUN pnpm install --frozen-lockfile && pnpm build
+COPY package.json pnpm-lock.yaml prisma/ ./
+RUN pnpm install --frozen-lockfile
+
+# Generate Prisma client after dependencies are installed
+RUN pnpm prisma generate
+
+# Copy source code - this changes often, rebuilds fast
+COPY . .
+RUN pnpm build
 
 EXPOSE 8080
 

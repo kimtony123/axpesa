@@ -1,0 +1,14 @@
+node_modules
+.git
+*.md
+.github
+.vscode
+*.log
+.env
+.env.local
+.env.production
+dist
+coverage
+tests
+.DS_Store
+*.log
