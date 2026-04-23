@@ -1,0 +1,431 @@
+{
+  "sections": [
+    {
+      "id": "introduction",
+      "title": "Introduction",
+      "subsections": [
+        {
+          "id": "what-is-permaclaw",
+          "title": "What is PermaClaw?",
+          "content": "PermaClaw is an immortal, self‑hostable AI assistant that never forgets. It combines a minimal Go agent, a rich web UI, a decentralized app store (aoStore), and permanent storage on the AO network. Your conversations, neuron spike data, and learned facts are stored in your own private AO process – recoverable with just your wallet, even if you lose your device.\n\nKey features:\nPermanent memory – every memory is encrypted and stored on AO, never lost.\nWallet‑based recovery – your wallet is the key to all your data.\nDecentralized app store – browse and install skills (Devices), DApps, and Projects from aoStore.\nMulti‑channel chat – talk via web UI, Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk, LINE, WeCom, and more.\nBiocomputing integration – stream CL1 neuron activity directly into your permanent memory.\nTool‑calling & extensibility – run shell commands, read/write files, search the web, and more.\nPermaClaw runs on $10 hardware with <10MB RAM, boots in under a second, and is fully open‑source (MIT)."
+        },
+        {
+          "id": "installation",
+          "title": "Installation",
+          "content": "Prerequisites\nLinux, macOS, or Windows (with WSL)\nGo 1.22+ (only needed if building from source)\nAn Arweave wallet (e.g., `aos.json`)\n\nDownload the Pre‑built Binary\n# Linux (amd64)\ncurl -L https://github.com/Ar-Aostore/PermaClaw/releases/latest/download/permaclaw-linux-amd64 -o permaclaw\nchmod +x permaclaw\n./permaclaw\n\nBuild from Source\ngit clone https://github.com/Ar-Aostore/PermaClaw.git\ncd permaclaw\nmake build\n./bin/permaclaw\n\nDocker Compose\nYou can also run PermaClaw using Docker Compose:\ngit clone https://github.com/Ar-Aostore/PermaClaw.git\ncd permaclaw\ndocker compose -f docker/docker-compose.yml --profile launcher up -d\n\nThen open `http://localhost:18800` in your browser."
+        },
+        {
+          "id": "quick-start",
+          "title": "Quick Start",
+          "content": "After running PermaClaw for the first time, open the web UI at `http://localhost:18800`.\nGo to Settings and provide the path to your Arweave wallet (e.g., `/home/user/.aos.json`).\nClick Spawn Memory Process – this creates your permanent AO process and saves its ID in the config.\nStart chatting! Your memories are now automatically saved to your AO process.\n\nYou can also do this via the command line:\npermaclaw spawn-memory --wallet /path/to/wallet.json\n\nNow you can ask questions, use tools, and install skills from the store – all permanently remembered."
+        }
+      ]
+    },
+    {
+      "id": "normal-users",
+      "title": "For Normal Users",
+      "subsections": [
+        {
+          "id": "getting-started",
+          "title": "Getting Started",
+          "content": "Once your wallet is connected and memory process spawned, you can start using PermaClaw immediately.\n\nBasic Commands\n`/help` – show available commands\n`/model <name>` – switch AI model\n`/clear` – clear conversation history\n`/show memory` – list stored memories\n\nYou can also ask the agent to perform tasks like web search, file operations, etc."
+        },
+        {
+          "id": "using-aostore",
+          "title": "Using aoStore & Skills",
+          "content": "The Store tab in the web UI lists products from the aoStore process.\nDevices are installable skills. Click Install – the skill package is downloaded from Arweave and placed in your workspace under `skills/`. The agent can then use it immediately.\nDApps can be launched in an embedded iframe or external browser.\nProjects show token and protocol information.\nOnce installed, you can invoke the skill by name (the agent will automatically discover it)."
+        },
+        {
+          "id": "chat-channels",
+          "title": "Chat Channels",
+          "content": "PermaClaw supports multiple chat platforms. Configure them in `~/.permaclaw/config.json`.\n\n{\n  \"channels\": {\n    \"telegram\": {\n      \"enabled\": true,\n      \"token\": \"YOUR_BOT_TOKEN\"\n    },\n    \"discord\": {\n      \"enabled\": true,\n      \"token\": \"YOUR_BOT_TOKEN\"\n    }\n  }\n}\n\nAfter configuration, run `permaclaw` (or `permaclaw gateway`) and the channels will be active.\nFor detailed setup of each channel, see the Chat Apps section below."
+        }
+      ]
+    },
+    {
+      "id": "biocomputing",
+      "title": "Biocomputing",
+      "subsections": [
+        {
+          "id": "cl1-setup",
+          "title": "CL1 Setup",
+          "content": "PermaClaw includes a built‑in client for streaming CL1 neuron activity to your memory process.\n\nPrerequisites\nCL1 device or CL SDK Simulator installed\nPython 3.8+ with `cl-sdk` package\n\nInstall the Python SDK:\npip install cl-sdk"
+        },
+        {
+          "id": "streaming-data",
+          "title": "Streaming Neuron Data",
+          "content": "Example Python script that sends spike data to PermaClaw's API:\n\nimport requests\nimport time\n\nwhile True:\n    spike = {\n        \"timestamp\": time.time_ns(),\n        \"channel\": 42,\n        \"amplitude\": 1.2\n    }\n    requests.post(\"http://localhost:18800/api/memory/spike\", json=spike)\n    time.sleep(0.1)\n\nThe spike is automatically forwarded to your AO process and becomes part of your permanent memory."
+        },
+        {
+          "id": "analysis",
+          "title": "Data Analysis",
+          "content": "Later, you can query the memory process via the UI or API to retrieve all recorded spikes for analysis.\n\nGET /api/memory?from=2025-01-01&to=2025-01-02\n\nThis returns a JSON array of spike events, which you can then process with your own tools."
+        }
+      ]
+    },
+    {
+      "id": "configuration",
+      "title": "Configuration",
+      "subsections": [
+        {
+          "id": "config-file",
+          "title": "Config File",
+          "content": "The main configuration file is `~/.permaclaw/config.json`. You can override its location with the `PERMACLAW_CONFIG` environment variable.\n\nA minimal example:\n{\n  \"wallet_path\": \"/home/user/.aos.json\",\n  \"aostore\": {\n    \"process_id\": \"aoStore-xxxxxx\",\n    \"ao_node_url\": \"https://ao.arweave.net\"\n  },\n  \"aomem\": {\n    \"process_id\": \"\"\n  },\n  \"agents\": {\n    \"defaults\": {\n      \"model\": \"gpt-5.2\"\n    }\n  },\n  \"model_list\": [\n    {\n      \"model_name\": \"gpt-5.2\",\n      \"model\": \"openai/gpt-5.2\",\n      \"api_key\": \"sk-...\"\n    }\n  ]\n}\n\nSee the full documentation for all available options."
+        },
+        {
+          "id": "model-list-configuration",
+          "title": "Model List Configuration",
+          "content": "The new `model_list` configuration offers several advantages over the legacy `providers` config:\n\nBenefits\nZero-code provider addition: Add OpenAI-compatible providers with configuration only\nLoad balancing: Configure multiple endpoints for the same model\nProtocol-based routing: Use prefixes like `openai/`, `anthropic/`, etc.\nCleaner configuration: Model-centric instead of vendor-centric\n\nModelConfig Fields\n| Field | Required | Description |\n| --- | --- | --- |\n| model_name | Yes | User-facing alias for the model |\n| model | Yes | Protocol and model identifier (e.g., `openai/gpt-5.4`) |\n| api_base | No | API endpoint URL |\n| api_key | No* | API authentication key |\n| proxy | No | HTTP proxy URL |\n| auth_method | No | Authentication method: `oauth`, `token` |\n| connect_mode | No | Connection mode for CLI providers: `stdio`, `grpc` |\n| rpm | No | Requests per minute limit |\n| max_tokens_field | No | Field name for max tokens |\n| request_timeout | No | HTTP request timeout in seconds; `<=0` uses default 120s |\n\n*`api_key` is required for HTTP-based protocols unless `api_base` points to a local server.\n\nProtocol Prefixes\nThe `model` field uses a protocol prefix format: `[protocol/]model-identifier`\n\n| Prefix | Description | Example |\n| --- | --- | --- |\n| openai/ | OpenAI API (default) | openai/gpt-5.4 |\n| anthropic/ | Anthropic API | anthropic/claude-opus-4 |\n| antigravity/ | Google via Antigravity OAuth | antigravity/gemini-2.0-flash |\n| gemini/ | Google Gemini API | gemini/gemini-2.0-flash-exp |\n| claude-cli/ | Claude CLI (local) | claude-cli/claude-sonnet-4.6 |\n| codex-cli/ | Codex CLI (local) | codex-cli/codex-4 |\n| github-copilot/ | GitHub Copilot | github-copilot/gpt-4o |\n| openrouter/ | OpenRouter | openrouter/anthropic/claude-sonnet-4.6 |\n| groq/ | Groq API | groq/llama-3.1-70b |\n| deepseek/ | DeepSeek API | deepseek/deepseek-chat |\n| cerebras/ | Cerebras API | cerebras/llama-3.3-70b |\n| qwen/ | Alibaba Qwen | qwen/qwen-max |\n| zhipu/ | Zhipu AI | zhipu/glm-4 |\n| nvidia/ | NVIDIA NIM | nvidia/llama-3.1-nemotron-70b |\n| ollama/ | Ollama (local) | ollama/llama3 |\n| vllm/ | vLLM (local) | vllm/my-model |\n| moonshot/ | Moonshot AI | moonshot/moonshot-v1-8k |\n| volcengine/ | Volcengine | volcengine/doubao-pro-32k |\n\nNote: If no prefix is specified, `openai/` is used as the default."
+        },
+        {
+          "id": "load-balancing",
+          "title": "Load Balancing",
+          "content": "Configure multiple endpoints for the same model to distribute load:\n\n{\n  \"model_list\": [\n    {\n      \"model_name\": \"gpt4\",\n      \"model\": \"openai/gpt-5.4\",\n      \"api_key\": \"sk-key1\",\n      \"api_base\": \"https://api1.example.com/v1\"\n    },\n    {\n      \"model_name\": \"gpt4\",\n      \"model\": \"openai/gpt-5.4\",\n      \"api_key\": \"sk-key2\",\n      \"api_base\": \"https://api2.example.com/v1\"\n    },\n    {\n      \"model_name\": \"gpt4\",\n      \"model\": \"openai/gpt-5.4\",\n      \"api_key\": \"sk-key3\",\n      \"api_base\": \"https://api3.example.com/v1\"\n    }\n  ]\n}\n\nWhen you request model `gpt4`, requests will be distributed across all three endpoints using round-robin selection.\n\nThis provides:\n- Automatic failover if one endpoint fails\n- Better rate limit distribution\n- Improved reliability for production deployments"
+        },
+        {
+          "id": "credential-encryption",
+          "title": "Credential Encryption",
+          "content": "PermaClaw supports encrypting `api_key` values in `model_list` configuration entries.\nEncrypted keys are stored as `enc://<base64>` strings and decrypted automatically at startup.\n\nQuick Start\n1. Set your passphrase\nexport PICOCLAW_KEY_PASSPHRASE=\"your-passphrase\"\n2. Encrypt an API key\nRun `permaclaw onboard` — it prompts for your passphrase and generates the SSH key, then automatically re-encrypts any plaintext `api_key` entries in your config on the next `SaveConfig` call. The resulting `enc://` value will look like: enc://AAAA...base64...\n3. Paste the output into your config\n\nSupported `api_key` Formats\n| Format | Example | Behaviour |\n| --- | --- | --- |\n| Plaintext | sk-abc123 | Used as-is |\n| File reference | file://openai.key | Content read from the same directory as the config file |\n| Encrypted | enc://<base64> | Decrypted at startup using PICOCLAW_KEY_PASSPHRASE |\n| Empty | \"\" | Passed through unchanged (used with auth_method: oauth) |\n\nCryptographic Design\nKey Derivation\nEncryption uses HKDF-SHA256 with an optional SSH private key as a second factor.\nWithout SSH key (passphrase only):\n  ikm     = SHA256(passphrase)\n  aes_key = HKDF-SHA256(ikm, salt, info=\"picoclaw-credential-v1\", 32 bytes)\nWith SSH key (recommended):\n  sshHash = SHA256(ssh_private_key_file_bytes)\n  ikm     = HMAC-SHA256(key=sshHash, message=passphrase)\n  aes_key = HKDF-SHA256(ikm, salt, info=\"picoclaw-credential-v1\", 32 bytes)\n\nEncryption\nAES-256-GCM(key=aes_key, nonce=random[12], plaintext=api_key)\n\nWire Format\nenc://<base64( salt[16] + nonce[12] + ciphertext )>\n\n| Field | Size | Description |\n| --- | --- | --- |\n| salt | 16 bytes | Random per encryption; fed into HKDF |\n| nonce | 12 bytes | Random per encryption; AES-GCM IV |\n| ciphertext | variable | AES-256-GCM ciphertext + 16-byte authentication tag |\n\nThe GCM authentication tag is appended to the ciphertext automatically. Any tampering causes decryption to fail with an error rather than returning corrupt plaintext.\n\nPerformance\n| Operation | Time (ARM Cortex-A) |\n| --- | --- |\n| Key derivation (HKDF) | < 1 ms |\n| AES-256-GCM decrypt | < 1 ms |\n| Total startup overhead | < 2 ms per key |\n\nTwo-Factor Security with SSH Key\nWhen a SSH private key is provided, breaking the encryption requires both:\nThe passphrase (`PICOCLAW_KEY_PASSPHRASE`)\nThe SSH private key file\nThis means a leaked config file alone is not sufficient to recover the API key, even if the passphrase is weak. The SSH key contributes 256 bits of entropy (Ed25519) regardless of passphrase strength.\n\nThreat Model\n| Attacker Has | Can Decrypt? |\n| --- | --- |\n| Config file only | No — needs passphrase + SSH key |\n| SSH key only | No — needs passphrase |\n| Passphrase only | No — needs SSH key |\n| Config file + SSH key + passphrase | Yes — full compromise |\n\nEnvironment Variables\n| Variable | Required | Description |\n| --- | --- | --- |\n| PICOCLAW_KEY_PASSPHRASE | Yes (for enc://) | Passphrase used for key derivation |\n| PICOCLAW_SSH_KEY_PATH | No | Path to SSH private key. Set to \"\" to disable auto-detection and use passphrase-only mode |\n\nSSH Key Auto-Detection\nIf `PICOCLAW_SSH_KEY_PATH` is not set, PermaClaw looks for the permaclaw-specific key:\n~/.ssh/picoclaw_ed25519.key\nThis dedicated file avoids conflicts with the user's existing SSH keys.\nRun `permaclaw onboard` to generate it automatically.\n\nTo explicitly disable SSH key usage and use passphrase-only mode:\nexport PICOCLAW_SSH_KEY_PATH=\"\"\n\nMigration\nBecause the only secret material is `PICOCLAW_KEY_PASSPHRASE` and the SSH private key file, migration is straightforward:\n1. Copy the config file to the new machine.\n2. Set `PICOCLAW_KEY_PASSPHRASE` to the same value.\n3. Copy the SSH private key file to the same path (or set `PICOCLAW_SSH_KEY_PATH` to its new location).\nNo re-encryption is needed.\n\nSecurity Considerations\nPassphrase strength matters in passphrase-only mode. Without an SSH key, a weak passphrase can be brute-forced offline. Use `PICOCLAW_SSH_KEY_PATH=\"\"` only in environments where no SSH key is available and the passphrase is sufficiently strong (≥ 32 random characters).\nThe SSH key is read-only at runtime. PermaClaw never writes to or modifies the SSH key file.\nPlaintext keys remain supported. Existing configs without `enc://` are unaffected.\nThe `enc://` format is versioned via the HKDF `info` field (`picoclaw-credential-v1`), allowing future algorithm upgrades without breaking existing encrypted values."
+        },
+        {
+          "id": "tools-configuration",
+          "title": "Tools Configuration",
+          "content": "PermaClaw's tools configuration is located in the `tools` field of `config.json`.\n\nDirectory Structure\n{\n  \"tools\": {\n    \"web\": { ... },\n    \"mcp\": { ... },\n    \"exec\": { ... },\n    \"cron\": { ... },\n    \"skills\": { ... }\n  }\n}\n\nWeb Tools\nWeb tools are used for web search and fetching.\n\nBrave\n| Config | Type | Default | Description |\n| --- | --- | --- | --- |\n| enabled | bool | false | Enable Brave search |\n| api_key | string | - | Brave Search API key |\n| max_results | int | 5 | Maximum number of results |\n\nDuckDuckGo\n| Config | Type | Default | Description |\n| --- | --- | --- | --- |\n| enabled | bool | true | Enable DuckDuckGo search |\n| max_results | int | 5 | Maximum number of results |\n\nPerplexity\n| Config | Type | Default | Description |\n| --- | --- | --- | --- |\n| enabled | bool | false | Enable Perplexity search |\n| api_key | string | - | Perplexity API key |\n| max_results | int | 5 | Maximum number of results |\n\nExec Tool\nThe exec tool is used to execute shell commands.\n\n| Config | Type | Default | Description |\n| --- | --- | --- | --- |\n| enable_deny_patterns | bool | true | Enable default dangerous command blocking |\n| custom_deny_patterns | array | [] | Custom deny patterns (regular expressions) |\n\nFunctionality\n`enable_deny_patterns`: Set to `false` to completely disable the default dangerous command blocking patterns\n`custom_deny_patterns`: Add custom deny regex patterns; commands matching these will be blocked\n\nDefault Blocked Command Patterns\nBy default, PermaClaw blocks the following dangerous commands:\nDelete commands: `rm -rf`, `del /f/q`, `rmdir /s`\nDisk operations: `format`, `mkfs`, `diskpart`, `dd if=`, writing to `/dev/sd*`\nSystem operations: `shutdown`, `reboot`, `poweroff`\nCommand substitution: `$()`, `${}`, backticks\nPipe to shell: `| sh`, `| bash`\nPrivilege escalation: `sudo`, `chmod`, `chown`\nProcess control: `pkill`, `killall`, `kill -9`\nRemote operations: `curl | sh`, `wget | sh`, `ssh`\nPackage management: `apt`, `yum`, `dnf`, `npm install -g`, `pip install --user`\nContainers: `docker run`, `docker exec`\nGit: `git push`, `git force`\nOther: `eval`, `source *.sh`\n\nConfiguration Example\n{\n  \"tools\": {\n    \"exec\": {\n      \"enable_deny_patterns\": true,\n      \"custom_deny_patterns\": [\n        \"\\\\brm\\\\s+-r\\\\b\",\n        \"\\\\bkillall\\\\s+python\"\n      ]\n    }\n  }\n}\n\nCron Tool\nThe cron tool is used for scheduling periodic tasks.\n\n| Config | Type | Default | Description |\n| --- | --- | --- | --- |\n| exec_timeout_minutes | int | 5 | Execution timeout in minutes, 0 means no limit |\n\nMCP Tool\nThe MCP tool enables integration with external Model Context Protocol servers.\n\nTool Discovery (Lazy Loading)\nWhen connecting to multiple MCP servers, exposing hundreds of tools simultaneously can exhaust the LLM's context window and increase API costs. The Discovery feature solves this by keeping MCP tools hidden by default. Instead of loading all tools, the LLM is provided with a lightweight search tool (using BM25 keyword matching or Regex). When the LLM needs a specific capability, it searches the hidden library. Matching tools are then temporarily \"unlocked\" and injected into the context for a configured number of turns (`ttl`).\n\nGlobal Config\n| Config | Type | Default | Description |\n| --- | --- | --- | --- |\n| enabled | bool | false | Enable MCP integration globally |\n| discovery | object | {} | Configuration for Tool Discovery |\n| servers | object | {} | Map of server name to server config |\n\nDiscovery Config (`discovery`)\n| Config | Type | Default | Description |\n| --- | --- | --- | --- |\n| enabled | bool | false | If true, MCP tools are hidden and loaded on-demand via search |\n| ttl | int | 5 | Number of conversational turns a discovered tool remains unlocked |\n| max_search_results | int | 5 | Maximum number of tools returned per search query |\n| use_bm25 | bool | true | Enable natural language/keyword search tool |\n| use_regex | bool | false | Enable regex pattern search tool |\n\nNote: If `discovery.enabled` is `true`, you MUST enable at least one search engine (`use_bm25` or `use_regex`), otherwise the application will fail to start.\n\nPer-Server Config\n| Config | Type | Required | Description |\n| --- | --- | --- | --- |\n| enabled | bool | yes | Enable this MCP server |\n| type | string | no | Transport type: stdio, sse, http |\n| command | string | stdio | Executable command for stdio transport |\n| args | array | no | Command arguments for stdio transport |\n| env | object | no | Environment variables for stdio process |\n| env_file | string | no | Path to environment file for stdio process |\n| url | string | sse/http | Endpoint URL for sse/http transport |\n| headers | object | no | HTTP headers for sse/http transport |\n\nTransport Behavior\nIf `type` is omitted, transport is auto-detected:\n`url` is set → `sse`\n`command` is set → `stdio`\n`http` and `sse` both use `url` + optional `headers`.\n`env` and `env_file` are only applied to `stdio` servers.\n\nSkills Tool\nThe skills tool configures skill discovery and installation via registries like ClawHub.\n\nRegistries\n| Config | Type | Default | Description |\n| --- | --- | --- | --- |\n| registries.clawhub.enabled | bool | true | Enable ClawHub registry |\n| registries.clawhub.base_url | string | https://clawhub.ai | ClawHub base URL |\n| registries.clawhub.auth_token | string | \"\" | Optional Bearer token for higher rate limits |\n| registries.clawhub.search_path | string | /api/v1/search | Search API path |\n| registries.clawhub.skills_path | string | /api/v1/skills | Skills API path |\n| registries.clawhub.download_path | string | /api/v1/download | Download API path |\n\nEnvironment Variables\nAll configuration options can be overridden via environment variables with the format `PICOCLAW_TOOLS_<SECTION>_<KEY>`:\nFor example:\n`PICOCLAW_TOOLS_WEB_BRAVE_ENABLED=true`\n`PICOCLAW_TOOLS_EXEC_ENABLE_DENY_PATTERNS=false`\n`PICOCLAW_TOOLS_CRON_EXEC_TIMEOUT_MINUTES=10`\n`PICOCLAW_TOOLS_MCP_ENABLED=true`\n\nNote: Nested map-style config (for example `tools.mcp.servers.<name>.*`) is configured in `config.json` rather than environment variables."
+        },
+        {
+          "id": "environment-variables",
+          "title": "Environment Variables",
+          "content": "`PERMACLAW_CONFIG` – path to config file (default `~/.permaclaw/config.json`)\n`PERMACLAW_HOME` – override home directory (default `~/.permaclaw`)\n`PERMACLAW_WALLET_PATH` – path to Arweave wallet JSON\n`PERMACLAW_AOSTORE_PROCESS_ID` – override aoStore process ID\n`PERMACLAW_AOMEM_PROCESS_ID` – override user memory process ID\n`PICOCLAW_AGENTS_DEFAULTS_MODEL` – override default model\n`PICOCLAW_KEY_PASSPHRASE` – passphrase for credential encryption\n`PICOCLAW_SSH_KEY_PATH` – path to SSH private key for encryption\n`PICOCLAW_TOOLS_<SECTION>_<KEY>` – override tools configuration"
+        },
+        {
+          "id": "workspace-layout",
+          "title": "Workspace Layout",
+          "content": "PermaClaw stores data in your configured workspace (default: `~/.permaclaw/workspace`):\nworkspace/\n├── sessions/       # Conversation sessions\n├── memory/          # Long‑term memory (MEMORY.md)\n├── state/           # Persistent state (last channel, etc.)\n├── cron/            # Scheduled jobs\n├── skills/          # Installed skills\n├── AGENTS.md        # Agent behavior guide\n├── HEARTBEAT.md     # Periodic task prompts\n├── IDENTITY.md      # Agent identity\n├── SOUL.md          # Agent soul\n├── TOOLS.md         # Tool descriptions\n└── USER.md          # User preferences"
+        },
+        {
+          "id": "security",
+          "title": "Security Sandbox",
+          "content": "By default, the agent can only access files and execute commands within the configured workspace (`restrict_to_workspace: true`). This prevents accidental or malicious damage to your system.\nTo disable (not recommended), set `restrict_to_workspace: false` in the agent defaults or via `PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE=false`.\nEven with restrictions disabled, dangerous commands (like `rm -rf`, disk formatting, etc.) are blocked by a safety guard."
+        }
+      ]
+    },
+    {
+      "id": "matrix-channel",
+      "title": "Matrix Channel Configuration",
+      "subsections": [
+        {
+          "id": "matrix-example-config",
+          "title": "Example Configuration",
+          "content": "Add this to `config.json`:\n\n{\n  \"channels\": {\n    \"matrix\": {\n      \"enabled\": true,\n      \"homeserver\": \"https://matrix.org\",\n      \"user_id\": \"@your-bot:matrix.org\",\n      \"access_token\": \"YOUR_MATRIX_ACCESS_TOKEN\",\n      \"device_id\": \"\",\n      \"join_on_invite\": true,\n      \"allow_from\": [],\n      \"group_trigger\": {\n        \"mention_only\": true\n      },\n      \"placeholder\": {\n        \"enabled\": true,\n        \"text\": \"Thinking...\"\n      },\n      \"reasoning_channel_id\": \"\",\n      \"message_format\": \"richtext\"\n    }\n  }\n}"
+        },
+        {
+          "id": "matrix-field-reference",
+          "title": "Field Reference",
+          "content": "| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| enabled | bool | Yes | Enable or disable the Matrix channel |\n| homeserver | string | Yes | Matrix homeserver URL (for example https://matrix.org) |\n| user_id | string | Yes | Bot Matrix user ID (for example @bot:matrix.org) |\n| access_token | string | Yes | Bot access token |\n| device_id | string | No | Optional Matrix device ID |\n| join_on_invite | bool | No | Auto-join invited rooms |\n| allow_from | []string | No | User whitelist (Matrix user IDs) |\n| group_trigger | object | No | Group trigger strategy (mention_only / prefixes) |\n| placeholder | object | No | Placeholder message config |\n| reasoning_channel_id | string | No | Target channel for reasoning output |\n| message_format | string | No | Output format: \"richtext\" (default) renders markdown as HTML; \"plain\" sends plain text only |"
+        },
+        {
+          "id": "matrix-supported-features",
+          "title": "Currently Supported Features",
+          "content": "• Text message send/receive with markdown rendering (bold, italic, headers, code blocks, etc.)\n• Configurable message format (`richtext` / `plain`)\n• Incoming image/audio/video/file download (MediaStore first, local path fallback)\n• Incoming audio normalization into existing transcription flow (`[audio: ...]`)\n• Outgoing image/audio/video/file upload and send\n• Group trigger rules (including mention-only mode)\n• Typing state (`m.typing`)\n• Placeholder message + final reply replacement\n• Auto-join invited rooms (can be disabled)"
+        },
+        {
+          "id": "matrix-todo",
+          "title": "Planned Improvements",
+          "content": "• Rich media metadata improvements (for example image/video size and thumbnails)"
+        }
+      ]
+    },
+    {
+      "id": "agent-refactor",
+      "title": "Agent Refactor Documentation",
+      "subsections": [
+        {
+          "id": "agent-refactor-purpose",
+          "title": "Purpose of the Refactor",
+          "content": "This directory is the working area for the current Agent refactor.\nThe purpose of this refactor is simple:\nthe project needs a smaller, clearer, and more stable Agent model before more Agent-related behavior is added.\nThe codebase already contains meaningful Agent behavior. What it still lacks is a sufficiently explicit and stable semantic boundary around that behavior.\nThis refactor exists to fix that first."
+        },
+        {
+          "id": "agent-refactor-stance",
+          "title": "Refactor Stance",
+          "content": "This is a maintenance-led consolidation effort.\nIt is not a general invitation to expand Agent behavior in parallel.\nDuring this refactor window, Agent-related work should converge on the current refactor track instead of branching into new semantics.\n\nThat means:\n• concept clarification before feature expansion\n• boundary tightening before abstraction growth\n• semantic consolidation before new behavior"
+        },
+        {
+          "id": "agent-core-rule",
+          "title": "Core Rule: Minimum Concepts Only",
+          "content": "This refactor follows one hard rule:\n**do not introduce a new concept unless it is strictly necessary**\n\nMore explicitly:\n• if an existing concept can be clarified, reuse it\n• if an existing boundary can be made explicit, do that first\n• if a behavior can be expressed without a new abstraction, do not add one\n• \"future flexibility\" is not enough justification on its own\n\nThe goal of this refactor is not to grow the model.\nThe goal is to reduce ambiguity."
+        },
+        {
+          "id": "agent-clarification-areas",
+          "title": "What Is Being Clarified",
+          "content": "This refactor is currently concerned with the following questions:\n• what an `Agent` is\n• what an `AgentLoop` is\n• what the lifecycle of `AgentLoop` is\n• what the event surface around `AgentLoop` is\n• how persona / identity is assembled\n• how capabilities are represented\n• how context boundaries and compression work\n• how subagent coordination works\n\nThese are the current working boundaries.\nIf they need to be adjusted, they should be adjusted explicitly rather than drift implicitly in code."
+        },
+        {
+          "id": "agent-documentation-structure",
+          "title": "Suggested Document Structure",
+          "content": "This directory may eventually contain notes such as:\n• `agent-overview.md` – what an Agent is\n• `agent-loop.md` – AgentLoop contract, lifecycle, event surface\n• `persona.md` – persona and identity assembly\n• `capability.md` – tools / skills / MCP capability semantics\n• `context.md` – context scope, history, summary, compression\n• `subagent.md` – subagent coordination rules\n\nThese files should be added only when they help clarify the current refactor work.\nThis directory should not turn into a generic architecture dump."
+        },
+        {
+          "id": "agent-out-of-scope",
+          "title": "What This Documentation Is Not For",
+          "content": "This directory is not intended for:\n• broad speculative architecture\n• future multi-node protocol design not required by the current refactor\n• parallel feature planning unrelated to Agent consolidation\n• adding new concepts before current ones are made clear\n\nIf a topic does not directly help reduce ambiguity in the current Agent model, it probably does not belong here yet."
+        },
+        {
+          "id": "agent-implementation-relationship",
+          "title": "Relationship to Implementation",
+          "content": "Implementation changes should not keep redefining Agent semantics implicitly.\nIf a PR changes or depends on Agent semantics, those semantics should either already exist here or be clarified in a linked issue first.\nThis directory is here to make implementation narrower and more disciplined."
+        },
+        {
+          "id": "agent-summary",
+          "title": "Summary",
+          "content": "The main question of this refactor is not:\n**what more can Agent do**\n\nThe main question is:\n**what is the smallest stable model that current Agent behavior can be organized around**"
+        }
+      ]
+    },
+    {
+      "id": "provider-architecture",
+      "title": "Provider Architecture",
+      "subsections": [
+        {
+          "id": "architecture-overview",
+          "title": "Architecture Overview",
+          "content": "The Provider Architecture has been refactored to support a model-centric configuration approach.\n\nCurrent Problems Solved\nConfiguration Structure Issues: Old approach required modifying Go code for each new provider\nCode Bloat Trend: Each OpenAI-compatible provider required changes to config.go and http_provider.go\nAgent-Provider Coupling: Agents needed to know both provider and model, adding complexity\n\nNew Approach: model_list\nInspired by LiteLLM design:\nModel-centric: Users care about models, not providers\nProtocol prefix: Use `protocol/model_name` format, e.g., `openai/gpt-5.4`, `anthropic/claude-sonnet-4.6`\nConfiguration-driven: Adding new providers only requires config changes, no code changes\n\nMulti-Agent Compatibility\n{\n  \"model_list\": [...],\n  \"agents\": {\n    \"defaults\": {\n      \"model\": \"deepseek-chat\"\n    },\n    \"coder\": {\n      \"model\": \"gpt-5.4\",\n      \"system_prompt\": \"You are a coding assistant...\"\n    },\n    \"translator\": {\n      \"model\": \"claude-sonnet-4.6\"\n    }\n  }\n}\nEach agent only needs to specify `model` (corresponds to `model_name` in `model_list`)."
+        },
+        {
+          "id": "migration-timeline",
+          "title": "Migration Timeline",
+          "content": "The migration from `providers` to `model_list` follows this timeline:\n\n| Version | Status |\n| --- | --- |\n| v1.x | `model_list` introduced, `providers` deprecated but functional |\n| v1.x+1 | Prominent deprecation warnings, migration tool available |\n| v2.0 | `providers` configuration removed |\n\nBackward Compatibility\nDuring the migration period, your existing `providers` configuration will continue to work:\n- If `model_list` is empty and `providers` has data, the system auto-converts internally\n- A deprecation warning is logged: `\"providers config is deprecated, please migrate to model_list\"`\n- All existing functionality remains unchanged\n\nMigration Checklist\n[ ] Identify all providers you're currently using\n[ ] Create `model_list` entries for each provider\n[ ] Use appropriate protocol prefixes\n[ ] Update `agents.defaults.model` to reference the new `model_name`\n[ ] Test that all models work correctly\n[ ] Remove or comment out the old `providers` section"
+        },
+        {
+          "id": "adding-new-provider",
+          "title": "Adding a New Provider",
+          "content": "With `model_list`, adding a new OpenAI-compatible provider requires zero code changes:\n\n{\n  \"model_list\": [\n    {\n      \"model_name\": \"my-custom-llm\",\n      \"model\": \"openai/my-model-v1\",\n      \"api_key\": \"your-api-key\",\n      \"api_base\": \"https://api.your-provider.com/v1\"\n    }\n  ]\n}\n\nJust specify `openai/` as the protocol (or omit it for the default), and provide your provider's API base URL.\n\nFor providers requiring special authentication (like Antigravity OAuth), use the `auth_method` field:\n\n{\n  \"model_list\": [\n    {\n      \"model_name\": \"gemini-flash\",\n      \"model\": \"antigravity/gemini-3-flash\",\n      \"auth_method\": \"oauth\"\n    }\n  ]\n}\n\nThen authenticate with:\npermaclaw auth login --provider antigravity"
+        }
+      ]
+    },
+    {
+      "id": "antigravity",
+      "title": "Antigravity (Google Cloud Code Assist)",
+      "subsections": [
+        {
+          "id": "antigravity-overview",
+          "title": "Overview",
+          "content": "Antigravity (Google Cloud Code Assist) is a Google-backed AI model provider that offers access to models like Claude Opus and Gemini through Google's Cloud infrastructure.\n\nKey Features:\nOAuth 2.0 with PKCE authentication\nAccess to Gemini and Claude models\nGoogle Cloud project-based quotas\nUsage tracking and credit management\n\nPrerequisites:\nA Google account\nGoogle Cloud Code Assist enabled (usually available via the \"Gemini for Google Cloud\" onboarding)\nGoogle Cloud Project with necessary APIs enabled"
+        },
+        {
+          "id": "antigravity-authentication",
+          "title": "Authentication",
+          "content": "To authenticate with Antigravity, run the following command:\npermaclaw auth login --provider antigravity\n\nOAuth 2.0 Flow with PKCE\nAntigravity uses OAuth 2.0 with PKCE (Proof Key for Code Exchange) for secure authentication:\n\n1. Generate PKCE Parameters\n   - verifier = randomBytes(32).toString(\"hex\")\n   - challenge = SHA256(verifier).base64url\n\n2. Build Authorization URL\n   - client_id, response_type=code, redirect_uri\n   - scope: cloud-platform, userinfo.email, userinfo.profile, cclog, experimentsandconfigs\n   - code_challenge, code_challenge_method=S256\n   - access_type=offline, prompt=consent\n\n3. Handle OAuth Callback\n   Automatic Mode (Local Development):\n   - Start a local HTTP server on port 51121\n   - Wait for the redirect from Google\n   - Extract the authorization code from query parameters\n   \n   Manual Mode (Remote/Headless):\n   - Display the authorization URL to the user\n   - User completes authentication in their browser\n   - User pastes the full redirect URL back into the terminal\n   - Parse the code from the pasted URL\n\n4. Exchange Code for Tokens\n   POST https://oauth2.googleapis.com/token\n   - client_id, client_secret, code, grant_type=authorization_code\n   - redirect_uri, code_verifier\n   - Returns: access_token, refresh_token, expires_in\n\n5. Fetch Additional User Data\n   - User Email: GET https://www.googleapis.com/oauth2/v1/userinfo\n   - Project ID: POST https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist\n\nAuth Profile Structure\n{\n  \"type\": \"oauth\",\n  \"provider\": \"google-antigravity\",\n  \"access\": \"<access_token>\",\n  \"refresh\": \"<refresh_token>\",\n  \"expires\": <timestamp_ms>,\n  \"email\": \"user@example.com\",\n  \"projectId\": \"your-project-id\"\n}\n\nAuth profiles are stored in `~/.permaclaw/auth.json`."
+        },
+        {
+          "id": "antigravity-manual-auth",
+          "title": "Manual Authentication (Headless/VPS)",
+          "content": "If you are running on a server (Coolify/Docker) and cannot reach `localhost`, follow these steps:\n\n1. Run the command:\n   permaclaw auth login --provider antigravity\n\n2. Copy the URL provided and open it in your local browser.\n\n3. Complete the login.\n\n4. Your browser will redirect to a `localhost:51121` URL (which will fail to load).\n\n5. Copy that final URL from your browser's address bar.\n\n6. Paste it back into the terminal where PermaClaw is waiting.\n\n7. PermaClaw will extract the authorization code and complete the process automatically.\n\nThis allows authentication on headless servers without browser access."
+        },
+        {
+          "id": "antigravity-models",
+          "title": "Managing Models",
+          "content": "List Available Models\nTo see which models your project has access to and check their quotas:\npermaclaw auth models\n\nFetch Available Models API\nPOST https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels\nHeaders:\n  Authorization: Bearer <access_token>\n  Content-Type: application/json\n  User-Agent: antigravity\n  X-Goog-Api-Client: google-cloud-sdk vscode_cloudshelleditor/0.1\n\nBody:\n{ \"project\": \"<project_id>\" }\n\nResponse Format:\n{\n  \"models\": {\n    \"<model_id>\": {\n      \"displayName\": \"Model Name\",\n      \"quotaInfo\": {\n        \"remainingFraction\": 0.8,\n        \"resetTime\": \"2025-01-01T00:00:00Z\",\n        \"isExhausted\": false\n      }\n    }\n  }\n}\n\nSwitch Models\nYou can change the default model in `~/.permaclaw/config.json` or override it via the CLI:\n# Override for a single command\npermaclaw agent -m \"Hello\" --model claude-opus-4-6-thinking\n\nWorking Models (Tested)\n| Model | Description |\n| --- | --- |\n| gemini-3-flash | Fast, highly available |\n| gemini-2.5-flash-lite | Lightweight |\n| claude-opus-4-6-thinking | Powerful, includes reasoning |"
+        },
+        {
+          "id": "antigravity-usage-tracking",
+          "title": "Usage Tracking",
+          "content": "Fetch Usage Data\nAntigravity provides usage tracking for credits and model quotas.\n\nAPI Endpoint:\nPOST https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist\n\nResponse includes:\n- availablePromptCredits\n- planInfo\n- currentTier\n- Individual model quotas with reset times\n\nUsage Response Structure:\n{\n  \"provider\": \"google-antigravity\",\n  \"displayName\": \"Google Antigravity\",\n  \"windows\": [\n    {\n      \"label\": \"Credits\",\n      \"usedPercent\": 45,\n      \"resetAt\": <timestamp>\n    }\n  ],\n  \"plan\": \"Free Tier\"\n}\n\nQuota Management\n- Uses Google Cloud project quotas (not separate billing)\n- Model access depends on your Google Cloud project configuration\n- 429 errors include quota reset delay information"
+        },
+        {
+          "id": "antigravity-api-endpoints",
+          "title": "API Endpoints",
+          "content": "Authentication Endpoints\n| Endpoint | Method | Purpose |\n| --- | --- | --- |\n| https://accounts.google.com/o/oauth2/v2/auth | GET | OAuth authorization |\n| https://oauth2.googleapis.com/token | POST | Token exchange |\n| https://www.googleapis.com/oauth2/v1/userinfo | GET | User info (email) |\n\nCloud Code Assist Endpoints\n| Endpoint | Method | Purpose |\n| --- | --- | --- |\n| https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist | POST | Load project info, credits, plan |\n| https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels | POST | List available models with quotas |\n| https://cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse | POST | Chat streaming endpoint |\n\nAPI Request Format (Chat):\n{\n  \"project\": \"your-project-id\",\n  \"model\": \"model-id\",\n  \"request\": {\n    \"contents\": [...],\n    \"systemInstruction\": {...},\n    \"generationConfig\": {...},\n    \"tools\": [...]\n  },\n  \"requestType\": \"agent\",\n  \"userAgent\": \"antigravity\",\n  \"requestId\": \"agent-timestamp-random\"\n}\n\nRequired Headers:\n- Authorization: Bearer <access_token>\n- Content-Type: application/json\n- User-Agent: antigravity\n- X-Goog-Api-Client: google-cloud-sdk vscode_cloudshelleditor/0.1\n- Client-Meta { ideType, platform, pluginType }"
+        },
+        {
+          "id": "antigravity-configuration",
+          "title": "Configuration",
+          "content": "config.json Configuration\n{\n  \"model_list\": [\n    {\n      \"model_name\": \"gemini-flash\",\n      \"model\": \"antigravity/gemini-3-flash\",\n      \"auth_method\": \"oauth\"\n    }\n  ],\n  \"agents\": {\n    \"defaults\": {\n      \"model\": \"gemini-flash\"\n    }\n  }\n}\n\nAuth Profile Storage\nAuth profiles are stored in `~/.permaclaw/auth.json`:\n{\n  \"credentials\": {\n    \"google-antigravity\": {\n      \"access_token\": \"ya29...\",\n      \"refresh_token\": \"1//...\",\n      \"expires_at\": \"2026-01-01T00:00:00Z\",\n      \"provider\": \"google-antigravity\",\n      \"auth_method\": \"oauth\",\n      \"email\": \"user@example.com\",\n      \"project_id\": \"my-project-id\"\n    }\n  }\n}\n\nEnvironment Variables\nexport PICOCLAW_AGENTS_DEFAULTS_MODEL=gemini-flash"
+        },
+        {
+          "id": "antigravity-deployment",
+          "title": "Real-world Usage (Coolify/Docker)",
+          "content": "If you are deploying via Coolify or Docker, follow these steps to test:\n\nEnvironment Variables:\nexport PICOCLAW_AGENTS_DEFAULTS_MODEL=gemini-flash\n\nAuthentication Persistence:\nIf you've logged in locally, you can copy your credentials to the server:\nscp ~/.permaclaw/auth.json user@your-server:~/.permaclaw/\n\nAlternatively, run the `auth login` command once on the server if you have terminal access.\n\nDocker Configuration:\n- Mount the auth.json file as a volume\n- Ensure PICOCLAW_KEY_PASSPHRASE is set in environment\n- Use the same wallet for memory recovery across instances"
+        },
+        {
+          "id": "antigravity-troubleshooting",
+          "title": "Antigravity Troubleshooting",
+          "content": "Common Issues:\n\n1. Token Expired\n   Solution: Refresh OAuth tokens\n   permaclaw auth login --provider antigravity\n\n2. Gemini for Google Cloud is not enabled\n   Solution: Enable the API in your Google Cloud Console\n\n3. Project not found\n   Solution: Ensure your Google Cloud project has the necessary APIs enabled\n   Check that the project ID is correctly fetched during authentication\n\n4. Models not appearing in list\n   Solution: Verify OAuth authentication completed successfully\n   Check auth profile storage: ~/.permaclaw/auth.json\n   Re-run permaclaw auth login --provider antigravity\n\n5. Empty Response (Restricted Models)\n   Some models might show up in the available models list but return an empty response (200 OK but empty SSE stream). This usually happens for preview or restricted models that the current project doesn't have permission to use.\n   Treatment: Treat empty responses as errors informing the user that the model might be restricted or invalid for their project.\n   Try: gemini-3-flash or claude-opus-4-6-thinking\n\n6. 429 Rate Limit\n   Antigravity has strict quotas. PermaClaw will display the \"reset time\" in the error message if you hit a limit.\n   Example 429 Error:\n   {\n     \"error\": {\n       \"code\": 429,\n       \"message\": \"You have exhausted your capacity on this model. Your quota will reset after 4h30m28s.\",\n       \"status\": \"RESOURCE_EXHAUSTED\",\n       \"details\": [{\n         \"@type\": \"type.googleapis.com/google.rpc.ErrorInfo\",\n         \"metadata\": {\n           \"quotaResetDelay\": \"4h30m28.060903746s\"\n         }\n       }]\n     }\n   }\n\n7. 404 Not Found\n   Solution: Ensure you are using a model ID from the `permaclaw auth models` list.\n   Use the short ID (e.g., `gemini-3-flash`) not the full path."
+        }
+      ]
+    },
+    {
+      "id": "chat-apps",
+      "title": "Chat Apps",
+      "subsections": [
+        {
+          "id": "telegram",
+          "title": "Telegram",
+          "content": "Create a bot with @BotFather and copy the token.\nGet your user ID from @userinfobot.\nAdd to config:\n\"channels\": {\n  \"telegram\": {\n    \"enabled\": true,\n    \"token\": \"YOUR_TOKEN\",\n    \"allow_from\": [\"YOUR_USER_ID\"]\n  }\n}\nRun `permaclaw gateway`. The bot will automatically register commands (`/start`, `/help`, etc.)."
+        },
+        {
+          "id": "discord",
+          "title": "Discord",
+          "content": "Create an application at Discord Developer Portal.\nGo to Bot settings, copy token, and enable MESSAGE CONTENT INTENT.\nInvite the bot to your server with proper permissions (Send Messages, Read Message History).\nAdd to config:\n\"discord\": {\n  \"enabled\": true,\n  \"token\": \"YOUR_TOKEN\",\n  \"allow_from\": [\"YOUR_USER_ID\"]\n}\nRun `permaclaw gateway`.\nTo respond only when mentioned, set `group_trigger: { \"mention_only\": true }`."
+        },
+        {
+          "id": "whatsapp",
+          "title": "WhatsApp",
+          "content": "PermaClaw supports native WhatsApp connection via `whatsmeow`. Build with `-tags whatsapp_native` or use the pre‑built binary with native support.\nConfiguration:\n\"whatsapp\": {\n  \"enabled\": true,\n  \"use_native\": true,\n  \"allow_from\": []\n}\nOn first run, scan the QR code printed in the terminal with WhatsApp (Linked Devices). Session is stored in `workspace/whatsapp/`."
+        },
+        {
+          "id": "matrix",
+          "title": "Matrix",
+          "content": "Add to config:\n\"matrix\": {\n  \"enabled\": true,\n  \"homeserver\": \"https://matrix.org\",\n  \"user_id\": \"@your-bot:matrix.org\",\n  \"access_token\": \"YOUR_TOKEN\",\n  \"allow_from\": []\n}\nGet an access token by logging in with your bot account."
+        },
+        {
+          "id": "qq",
+          "title": "QQ",
+          "content": "Create a bot on QQ Open Platform and get `app_id` and `app_secret`.\nConfigure:\n\"qq\": {\n  \"enabled\": true,\n  \"app_id\": \"YOUR_APP_ID\",\n  \"app_secret\": \"YOUR_APP_SECRET\",\n  \"allow_from\": []\n}\nRun `permaclaw gateway`."
+        },
+        {
+          "id": "dingtalk",
+          "title": "DingTalk",
+          "content": "Create an internal app on DingTalk Open Platform.\nCopy `client_id` and `client_secret`.\nConfigure:\n\"dingtalk\": {\n  \"enabled\": true,\n  \"client_id\": \"YOUR_CLIENT_ID\",\n  \"client_secret\": \"YOUR_CLIENT_SECRET\",\n  \"allow_from\": []\n}\nRun gateway."
+        },
+        {
+          "id": "line",
+          "title": "LINE",
+          "content": "Create a LINE Official Account at LINE Developers.\nCopy `channel_secret` and `channel_access_token`.\nSet the webhook URL to `https://your-domain/webhook/line` (LINE requires HTTPS).\nConfigure: \"line\": {\n  \"enabled\": true,\n  \"channel_secret\": \"YOUR_SECRET\",\n  \"channel_access_token\": \"YOUR_TOKEN\",\n  \"webhook_path\": \"/webhook/line\",\n  \"allow_from\": []\n}\nRun gateway."
+        },
+        {
+          "id": "wecom",
+          "title": "WeCom (企业微信)",
+          "content": "PermaClaw supports three WeCom modes:\nBot – simple group chat integration.\nApp – custom app with more features.\nAI Bot – official AI Bot with streaming replies.\nSee the WeCom Configuration Guide for detailed setup."
+        }
+      ]
+    },
+    {
+      "id": "aostore",
+      "title": "aoStore",
+      "subsections": [
+        {
+          "id": "browsing",
+          "title": "Browsing the Store",
+          "content": "The Store page in the web UI lists all products available on aoStore. You can filter by type:\nWebsite DApp – browser‑based dapps (open in iframe).\nMobile DApp – mobile‑optimized (install button).\nDevice – npm‑like packages / libraries (skills).\nProject – tokens, protocols on AO."
+        },
+        {
+          "id": "installing-devices",
+          "title": "Installing Devices (Skills)",
+          "content": "Click Install on any Device product. PermaClaw will:\nDownload the skill package from Arweave.\nVerify integrity and extract it to `workspace/skills/<skill-name>/`.\nMake it available to the agent immediately.\nInstalled skills appear in the Skills page and can be invoked by name in conversations."
+        }
+      ]
+    },
+    {
+      "id": "permanent-memory",
+      "title": "Permanent Memory",
+      "subsections": [
+        {
+          "id": "how-it-works",
+          "title": "How It Works",
+          "content": "Each user has their own AO process, created when you first provide your wallet. This process:\nStores encrypted memories (conversations, facts, spikes).\nIs accessible only by you – every message is signed with your wallet.\nLives forever on the AO network, independent of your device.\nYour wallet is the only key. If you lose your device, simply point PermaClaw to the same wallet and your memories are restored."
+        },
+        {
+          "id": "wallet-recovery",
+          "title": "Wallet Recovery",
+          "content": "To recover from a new device:\nInstall PermaClaw and start it.\nIn Settings, provide the path to your Arweave wallet (the same one used initially).\nClick Recover Memory Process – enter your Process ID if known, or PermaClaw can fetch it from the network (requires wallet signature).\nYour memories will be downloaded and decrypted locally.\n\nYou can also use the CLI:\npermaclaw memory recover --wallet /path/to/wallet.json --process-id <id>"
+        },
+        {
+          "id": "memory-management",
+          "title": "Memory Management",
+          "content": "The Memory page in the web UI lets you:\nList all stored memories (with timestamps, importance).\nView individual memory content.\nSearch by text or date.\nManually add a memory (useful for notes).\nDelete a memory (removes from process)."
+        }
+      ]
+    },
+    {
+      "id": "cli-reference",
+      "title": "CLI Reference",
+      "subsections": [
+        {
+          "id": "commands",
+          "title": "Commands",
+          "content": "| Command | Description |\n| --- | --- |\n| permaclaw onboard | Initialize config and workspace |\n| permaclaw agent [-m \"message\"] | Chat with the agent (interactive or one-shot) |\n| permaclaw gateway | Start the gateway (for chat channels) |\n| permaclaw status | Show status |\n| permaclaw spawn-memory --wallet <path> | Spawn your permanent AO process |\n| permaclaw memory list | List stored memories |\n| permaclaw memory get <id> | Retrieve a specific memory |\n| permaclaw memory recover --wallet <path> --process-id <id> | Recover memories from a process |\n| permaclaw cron list/add/remove | Manage scheduled jobs |\n| permaclaw skills list/install/remove | Manage skills |\n| permaclaw auth login --provider <name> | Authenticate with a provider |\n| permaclaw auth models | List available models for provider |"
+        }
+      ]
+    },
+    {
+      "id": "debugging",
+      "title": "Debugging",
+      "subsections": [
+        {
+          "id": "debug-mode",
+          "title": "Debug Mode",
+          "content": "PermaClaw performs multiple complex interactions under the hood for every single request it receives—from routing messages and evaluating complexity, to executing tools and adapting to model failures. Being able to see exactly what is happening is crucial, not just for troubleshooting potential issues, but also for truly understanding how the agent operates.\n\nStarting PermaClaw in Debug Mode\nTo get detailed information about what the agent is doing (LLM requests, tool calls, message routing), you can start the PermaClaw gateway with the debug flag:\npermaclaw gateway --debug\n# or\npermaclaw gateway -d\n\nIn this mode, the system will format the logs extensively and display previews of system prompts and tool execution results.\n\nDisabling Log Truncation (Full Logs)\nBy default, PermaClaw truncates very long strings (such as the System Prompt or large JSON output results) in the debug logs to keep the console readable.\nIf you need to inspect the complete output of a command or the exact payload sent to the LLM model, you can use the `--no-truncate` flag.\nNote: This flag only works when combined with the `--debug` mode.\n\npermaclaw gateway --debug --no-truncate\n\nWhen this flag is active, the global truncation function is disabled. This is extremely useful for:\nVerifying the exact syntax of the messages sent to the provider.\nReading the complete output of tools like `exec`, `web_fetch`, or `read_file`.\nDebugging the session history saved in memory."
+        }
+      ]
+    },
+    {
+      "id": "testing-development",
+      "title": "Testing & Development",
+      "subsections": [
+        {
+          "id": "test-suite-overview",
+          "title": "Test Suite Overview",
+          "content": "The Provider architecture refactoring includes a comprehensive test suite.\n\nTest File Structure\npkg/\n├── config/\n│   ├── model_config_test.go      # ModelConfig struct and GetModelConfig tests\n│   └── migration_test.go         # Backward compatibility and migration tests\n├── providers/\n│   ├── factory_test.go           # Provider factory tests\n│   └── factory_provider_test.go  # Factory provider integration tests\n│   └── registry_test.go          # Load balancing tests\n│   └── integration_test.go       # E2E integration tests\n\nRunning Tests\n# Run all tests\ngo test ./pkg/... -v\n\n# Run with data race detection\ngo test ./pkg/... -race\n\n# Run specific package tests\ngo test ./pkg/config -v\ngo test ./pkg/providers -v\n\n# Run E2E tests\ngo test ./pkg/providers -run TestE2E -v\n\n# Run performance tests\ngo test ./pkg/providers -bench=. -benchmem"
+        },
+        {
+          "id": "configuration-tests",
+          "title": "Configuration Tests",
+          "content": "Configuration Parsing Tests (pkg/config/model_config_test.go)\n\n| Test Name | Purpose | PRD Reference |\n| --- | --- | --- |\n| TestModelConfig_Parsing | Verify ModelConfig JSON parsing | US-001 |\n| TestModelConfig_ModelListInConfig | Verify model_list parsing in Config | US-001 |\n| TestModelConfig_Validation | Verify required field validation | US-001 |\n| TestConfig_GetModelConfig_Found | Verify GetModelConfig finds model | US-002 |\n| TestConfig_GetModelConfig_NotFound | Verify GetModelConfig returns error | US-002 |\n| TestConfig_GetModelConfig_EmptyModelList | Verify empty model_list handling | US-002 |\n| TestConfig_BackwardCompatibility_ProvidersToModelList | Verify old config conversion | US-003 |\n| TestConfig_DeprecationWarning | Verify deprecation warning | US-003 |\n| TestModelConfig_ProtocolExtraction | Verify protocol prefix extraction | US-004 |\n| TestConfig_ModelNameUniqueness | Verify model_name uniqueness | US-001 |\n\nMigration Tests (pkg/config/migration_test.go)\n\n| Test Name | Purpose | PRD Reference |\n| --- | --- | --- |\n| TestConvertProvidersToModelList_OpenAI | OpenAI config conversion | US-003 |\n| TestConvertProvidersToModelList_Anthropic | Anthropic config conversion | US-003 |\n| TestConvertProvidersToModelList_MultipleProviders | Multiple provider conversion | US-003 |\n| TestConvertProvidersToModelList_EmptyProviders | Empty providers handling | US-003 |\n| TestConvertProvidersToModelList_GitHubCopilot | GitHub Copilot conversion | US-003 |\n| TestConvertProvidersToModelList_Antigravity | Antigravity conversion | US-003 |\n| TestGenerateModelName_* | Model name generation | US-003 |\n| TestHasProvidersConfig_* | Detect old config existence | US-003 |\n| TestValidateMigration_* | Migration validation | US-003 |\n| TestMigrateConfig_DryRun | Dry run migration | US-003 |\n| TestMigrateConfig_Actual | Actual migration | US-003 |"
+        },
+        {
+          "id": "load-balancing-tests",
+          "title": "Load Balancing Tests",
+          "content": "Load Balancing Tests (pkg/providers/registry_test.go)\n\n| Test Name | Purpose | PRD Reference |\n| --- | --- | --- |\n| TestModelRegistry_SingleConfig | Single config returns same result | US-006 |\n| TestModelRegistry_RoundRobinSelection | 3-config round-robin selection | US-006 |\n| TestModelRegistry_RoundRobinTwoConfigs | 2-config round-robin selection | US-006 |\n| TestModelRegistry_ConcurrentAccess | Concurrent access thread safety | US-006 |\n| TestModelRegistry_RaceDetection | Data race detection | US-006 |\n| TestModelRegistry_ModelNotFound | Model not found error | US-006 |\n| TestModelRegistry_EmptyRegistry | Empty registry handling | US-006 |\n| TestModelRegistry_MultipleModels | Multiple model registration | US-006 |\n| TestModelRegistry_MixedSingleAndMultiple | Single/multiple config mix | US-006 |\n| TestModelRegistry_CaseSensitiveModelNames | Case sensitivity | US-006 |\n\nPerformance Tests\n| Test Name | Purpose |\n| --- | --- |\n| BenchmarkCreateProviderFromConfig | Provider creation performance |\n| BenchmarkGetModelConfig | Model lookup performance |\n| BenchmarkGetModelConfigParallel | Concurrent lookup performance |"
+        },
+        {
+          "id": "integration-tests",
+          "title": "Integration Tests",
+          "content": "E2E Integration Tests (pkg/providers/integration_test.go)\n\n| Test Name | Purpose | PRD Reference |\n| --- | --- | --- |\n| TestE2E_OpenAICompatibleProvider_NoCodeChange | Zero-code provider addition | Goal |\n| TestE2E_LoadBalancing_RoundRobin | Load balancing actual effect | US-006 |\n| TestE2E_BackwardCompatibility_OldProvidersConfig | Old config compatibility | US-003 |\n| TestE2E_ErrorHandling_ModelNotFound | Model not found | FR-30 |\n| TestE2E_ErrorHandling_MissingAPIKey | Missing API key | FR-31 |\n| TestE2E_ErrorHandling_InvalidAPIBase | Invalid API base | FR-30 |\n| TestE2E_ToolCalls_OpenAICompatible | Tool call support | - |\n| TestE2E_AntigravityProvider | Antigravity provider | US-004 |\n| TestE2E_ClaudeCLIProvider | Claude CLI provider | US-004 |\n\nFactory Provider Tests (pkg/providers/factory_test.go)\n\n| Test Name | Purpose | PRD Reference |\n| --- | --- | --- |\n| TestCreateProviderFromConfig_OpenAI | Create OpenAI provider | US-004 |\n| TestCreateProviderFromConfig_OpenAIDefault | Default openai protocol | US-004 |\n| TestCreateProviderFromConfig_Anthropic | Create Anthropic provider | US-004 |\n| TestCreateProviderFromConfig_Antigravity | Create Antigravity provider | US-004 |\n| TestCreateProviderFromConfig_ClaudeCLI | Create Claude CLI provider | US-004 |\n| TestCreateProviderFromConfig_CodexCLI | Create Codex CLI provider | US-004 |\n| TestCreateProviderFromConfig_GitHubCopilot | Create GitHub Copilot provider | US-004 |\n| TestCreateProviderFromConfig_UnknownProtocol | Unknown protocol error handling | US-004 |\n| TestCreateProviderFromConfig_MissingAPIKey | Missing API key error | US-004 |\n| TestExtractProtocol | Protocol prefix extraction | US-004 |\n| TestCreateProvider_UsesModelList | Create using model_list | US-005 |\n| TestCreateProvider_FallbackToProviders | Fallback to providers | US-005 |\n| TestCreateProvider_PriorityModelListOverProviders | model_list priority | US-005 |"
+        }
+      ]
+    },
+    {
+      "id": "known-issues-fixes",
+      "title": "Known Issues & Fixes",
+      "subsections": [
+        {
+          "id": "issue-783-fallback",
+          "title": "Issue #783: Fallback Model Alias Resolution",
+          "content": "Problem Description\nWhen `agents.*.model.primary/fallbacks` uses `model_name` aliases (e.g., `step-3.5-flash`), the fallback chain treats the alias as a real `provider/model` reference, causing:\n- `provider` may be empty\n- `model` may be incorrect\n- Fallback execution may send alias directly to OpenAI-compatible provider, triggering `Unknown Model` errors\n- Logs show `provider=` empty value when `defaults.provider` is empty\n\nRoot Cause\n`ResolveCandidates` only performs `ParseModelRef` on strings, without first mapping aliases to real `model` fields via `model_list`.\n\nSolution\nFix fallback candidate resolution:\n1. Priority resolution through `model_list` to resolve aliases\n2. Maintain backward compatibility: if `model_list` miss, continue with original `ParseModelRef` fallback\n3. Add tests covering aliases, nested path models (e.g., `openrouter/stepfun/...`), and empty default provider\n\nBest Practices from External References\nOpenRouter/LiteLLM/Cloudflare AI Gateway recommendations:\n- Prioritize explicit configuration, don't rely on string splitting to infer provider\n- Preserve complete path semantics for gateway model identifiers, avoid truncation causing Unknown Model\n- Fallback and primary should reuse the same resolution strategy\n\nImplementation\nCompleted changes:\n- `pkg/providers/fallback.go`: Added `ResolveCandidatesWithLookup`, kept `ResolveCandidates` backward compatible\n- `pkg/agent/instance.go`: Before building fallback candidates, prioritize resolving aliases through `model_list`, and add default `openai/` prefix for protocol-less models before parsing\n- `pkg/providers/fallback_test.go`: Added alias resolution and deduplication tests\n- `pkg/agent/instance_test.go`: Added agent-side alias resolution to nested model path and protocol-less model resolution tests\n\nVerification\n- Style alignment check: Consistent with existing `pkg/providers/fallback_test.go`, `pkg/providers/model_ref_test.go` patterns\n- Quality verification: `make generate` then `make check` all passed"
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Troubleshooting",
+      "subsections": [
+        {
+          "id": "common-issues",
+          "title": "Common Issues",
+          "content": "Web search says \"API key configuration issue\"\nThis is normal if you haven't configured a search API key. PermaClaw provides helpful links for manual searching. Configure Brave, Tavily, Perplexity, or SearXNG in your config.\n\nTelegram bot says \"Conflict: terminated by other getUpdates\"\nAnother instance of the bot is running. Ensure only one `permaclaw gateway` is active.\n\nMemory process not found after wallet recovery\nMake sure you are using the same wallet that created the process. If you lost the Process ID, you may need to look up on the AO explorer using your wallet address.\n\nModel errors (OpenRouter)\nSymptom: You see either:\n`Error creating provider: model \"openrouter/free\" not found in model_list`\nOpenRouter returns 400: `\"free is not a valid model ID\"`\n\nCause: The `model` field in your `model_list` entry is what gets sent to the API. For OpenRouter you must use the full model ID, not a shorthand.\nWrong: `\"model\": \"free\"` → OpenRouter receives `free` and rejects it.\nRight: `\"model\": \"openrouter/free\"` → OpenRouter receives `openrouter/free` (auto free-tier routing).\n\nFix: In `~/.permaclaw/config.json`:\nagents.defaults.model must match a `model_name` in `model_list` (e.g. `\"openrouter-free\"`).\nThat entry's model must be a valid OpenRouter model ID, for example:\n`\"openrouter/free\"` – auto free-tier\n`\"google/gemini-2.0-flash-exp:free\"`\n`\"meta-llama/llama-3.1-8b-instruct:free\"`\n\nExample snippet:\n{\n  \"agents\": {\n    \"defaults\": {\n      \"model\": \"openrouter-free\"\n    }\n  },\n  \"model_list\": [\n    {\n      \"model_name\": \"openrouter-free\",\n      \"model\": \"openrouter/free\",\n      \"api_key\": \"sk-or-v1-YOUR_OPENROUTER_KEY\",\n      \"api_base\": \"https://openrouter.ai/api/v1\"\n    }\n  ]\n}\nGet your key at OpenRouter Keys."
+        },
+        {
+          "id": "model-list-issues",
+          "title": "Model List Issues",
+          "content": "Model not found error\n`model \"xxx\" not found in model_list or providers`\nSolution: Ensure the `model_name` in `model_list` matches the value in `agents.defaults.model`.\n\nUnknown protocol error\n`unknown protocol \"xxx\" in model \"xxx/model-name\"`\nSolution: Use a supported protocol prefix. See the Protocol Prefixes table in the Model List Configuration section.\n\nMissing API key error\n`api_key or api_base is required for HTTP-based protocol \"xxx\"`\nSolution: Provide `api_key` and/or `api_base` for HTTP-based providers.\n\nFallback Model Alias Issues\nSymptom: Fallback chain fails with alias model names\nSolution: Ensure aliases are properly defined in `model_list` with corresponding `model` field containing the protocol prefix.\n\nLoad Balancing Issues\nSymptom: Requests not distributed across multiple endpoints\nSolution: Verify all entries have the same `model_name` value. Round-robin selection only works when multiple entries share the same `model_name`."
+        },
+        {
+          "id": "antigravity-issues",
+          "title": "Antigravity-Specific Issues",
+          "content": "Token expired\nRefresh OAuth tokens: permaclaw auth login --provider antigravity\n\nGemini for Google Cloud is not enabled\nEnable the API in your Google Cloud Console\n\nProject not found\nEnsure your Google Cloud project has the necessary APIs enabled\nCheck that the project ID is correctly fetched during authentication\n\nModels not appearing in list\nVerify OAuth authentication completed successfully\nCheck auth profile storage: ~/.permaclaw/auth.json\nRe-run permaclaw auth login --provider antigravity\n\nEmpty Response\nIf a model returns an empty reply, it may be restricted for your project. Try gemini-3-flash or claude-opus-4-6-thinking.\n\n429 Rate Limit\nAntigravity has strict quotas. PermaClaw will display the \"reset time\" in the error message if you hit a limit.\n\n404 Not Found\nEnsure you are using a model ID from the permaclaw auth models list. Use the short ID (e.g., gemini-3-flash) not the full path."
+        }
+      ]
+    },
+    {
+      "id": "license",
+      "title": "License",
+      "subsections": [
+        {
+          "id": "license",
+          "title": "License",
+          "content": "<p>PermaClaw is licensed under the MIT License. See <a href=\"#\">LICENSE</a> for details.</p>"
+        }
+      ]
+    }
+  ]
+}
