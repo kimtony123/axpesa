@@ -21,6 +21,8 @@ config();
 const app = express();
 const PORT = Number(process.env.PORT) || 8080;
 
+app.set('trust proxy', 1);
+
 app.use(helmet());
 
 // CORS - allow multiple origins for development and production
