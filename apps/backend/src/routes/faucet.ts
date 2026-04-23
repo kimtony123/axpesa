@@ -7,9 +7,9 @@ import { strictRateLimiter } from '../middleware/rateLimiter.js';
 
 const router: ExpressRouter = Router();
 
-const FAUCET_AMOUNT = 100; // 100 AxCNH per claim
-const CFX_FAUCET_AMOUNT = 0.1; // 0.1 CFX per claim (for gas fees)
-const CLAIM_COOLDOWN = 3600000; // 1 hour in milliseconds
+const FAUCET_AMOUNT = 100;
+const CFX_FAUCET_AMOUNT = 0.1;
+const CLAIM_COOLDOWN = 3600000;
 
 router.post('/claim', strictRateLimiter, async (req, res, next) => {
   try {
@@ -19,33 +19,31 @@ router.post('/claim', strictRateLimiter, async (req, res, next) => {
       throw createError('Invalid wallet address', 400);
     }
 
-    // Check if wallet exists in our system or create new user
     let user = await prisma.user.findUnique({
-      where: { walletAddress },
+      where: { walletaddress: walletAddress },
     });
 
     if (!user) {
       user = await prisma.user.create({
         data: {
-          walletAddress,
-          phoneNumber: 'FAUCET_CLAIM',
+          walletaddress: walletAddress,
+          phonenumber: 'FAUCET_CLAIM',
         },
       });
     }
 
-    // Check for recent claim
     const recentFaucetClaim = await prisma.transaction.findFirst({
       where: {
-        walletAddress,
+        walletaddress: walletAddress,
         type: 'faucet',
-        createdAt: {
+        createdat: {
           gte: new Date(Date.now() - CLAIM_COOLDOWN),
         },
       },
     });
 
     if (recentFaucetClaim) {
-      const timeRemaining = Math.ceil((CLAIM_COOLDOWN - (Date.now() - recentFaucetClaim.createdAt.getTime())) / 1000 / 60);
+      const timeRemaining = Math.ceil((CLAIM_COOLDOWN - (Date.now() - recentFaucetClaim.createdat.getTime())) / 1000 / 60);
       throw createError(
         `Please wait ${timeRemaining} minutes before claiming again`,
         429,
@@ -53,34 +51,31 @@ router.post('/claim', strictRateLimiter, async (req, res, next) => {
       );
     }
 
-    // Check hot wallet (deployer) balance for faucet
     const faucetBalance = await confluxService.getBalance(process.env.ADMIN_SIGNER_1 || '', 'AxCNH');
 
     if (parseFloat(faucetBalance) < FAUCET_AMOUNT) {
       throw createError('Faucet is empty. Please try again later.', 503, 'FAUCET_EMPTY');
     }
 
-    // Mint AxCNH from hot wallet to user
-    const txHash = await confluxService.mintTokens(walletAddress, FAUCET_AMOUNT, 'AxCNH');
+    const txhash = await confluxService.mintTokens(walletAddress, FAUCET_AMOUNT, 'AxCNH');
 
-    // Record the claim
     await prisma.transaction.create({
       data: {
-        transactionId: `faucet_${Date.now()}`,
+        transactionid: `faucet_${Date.now()}`,
         type: 'faucet',
-        userId: user.id,
-        walletAddress,
-        axcnhAmount: FAUCET_AMOUNT,
+        userid: user.id,
+        walletaddress: walletAddress,
+        axcnhamount: FAUCET_AMOUNT,
         status: 'completed',
-        txHash,
-        fiatAmount: 0,
-        fiatCurrency: 'CNY',
-        usdAmount: 0,
-        paymentMethod: 'faucet',
-        feePercent: 0,
-        feeAmount: 0,
-        totalAmount: 0,
-        rateUsed: 0,
+        txhash,
+        fiatamount: 0,
+        fiatcurrency: 'CNY',
+        usdamount: 0,
+        paymentmethod: 'faucet',
+        feepercent: 0,
+        feeamount: 0,
+        totalamount: 0,
+        rateused: 0,
       },
     });
 
@@ -89,7 +84,7 @@ router.post('/claim', strictRateLimiter, async (req, res, next) => {
       data: {
         message: `Successfully claimed ${FAUCET_AMOUNT} AxCNH`,
         amount: FAUCET_AMOUNT,
-        txHash,
+        txHash: txhash,
         nextClaim: new Date(Date.now() + CLAIM_COOLDOWN).toISOString(),
       },
     });
@@ -120,17 +115,17 @@ router.post('/claim-cfx', strictRateLimiter, async (req, res, next) => {
       );
     }
 
-    console.log(`💰 Sending ${CFX_FAUCET_AMOUNT} CFX to ${normalizedAddress} for gas fees`);
+    console.log(`Sending ${CFX_FAUCET_AMOUNT} CFX to ${normalizedAddress} for gas fees`);
     
-    const txHash = await confluxService.sendCFX(normalizedAddress, CFX_FAUCET_AMOUNT);
+    const txhash = await confluxService.sendCFX(normalizedAddress, CFX_FAUCET_AMOUNT);
 
     res.json({
       success: true,
       data: {
         message: `Successfully sent ${CFX_FAUCET_AMOUNT} CFX for gas fees`,
         amount: CFX_FAUCET_AMOUNT,
-        txHash,
-        explorerUrl: `https://evmtestnet.confluxscan.io/tx/${txHash}`,
+        txHash: txhash,
+        explorerUrl: `https://evmtestnet.confluxscan.io/tx/${txhash}`,
       },
     });
   } catch (err) {
@@ -144,11 +139,11 @@ router.get('/status/:walletAddress', async (req, res) => {
 
     const lastClaim = await prisma.transaction.findFirst({
       where: {
-        walletAddress,
+        walletaddress: walletAddress,
         type: 'faucet',
       },
       orderBy: {
-        createdAt: 'desc',
+        createdat: 'desc',
       },
     });
 
@@ -156,7 +151,7 @@ router.get('/status/:walletAddress', async (req, res) => {
     let timeUntilNextClaim = 0;
 
     if (lastClaim) {
-      const timeSinceClaim = Date.now() - lastClaim.createdAt.getTime();
+      const timeSinceClaim = Date.now() - lastClaim.createdat.getTime();
       if (timeSinceClaim < CLAIM_COOLDOWN) {
         canClaim = false;
         timeUntilNextClaim = CLAIM_COOLDOWN - timeSinceClaim;
@@ -168,11 +163,11 @@ router.get('/status/:walletAddress', async (req, res) => {
     res.json({
       success: true,
       data: {
-        walletAddress,
+        walletaddress: walletAddress,
         canClaim: canClaim && parseFloat(faucetBalance) >= FAUCET_AMOUNT,
-        timeUntilNextClaim: Math.ceil(timeUntilNextClaim / 1000 / 60), // minutes
-        lastClaimedAmount: lastClaim?.axcnhAmount || null,
-        lastClaimedAt: lastClaim?.createdAt || null,
+        timeUntilNextClaim: Math.ceil(timeUntilNextClaim / 1000 / 60),
+        lastClaimedAmount: lastClaim?.axcnhamount || null,
+        lastClaimedAt: lastClaim?.createdat || null,
         faucetAmount: FAUCET_AMOUNT,
         faucetBalance: parseFloat(faucetBalance),
       },

@@ -30,7 +30,7 @@ router.post('/flutterwave', async (req, res) => {
 
   try {
     const transaction = await prisma.transaction.findUnique({ 
-      where: { transactionId: txRef } 
+      where: { transactionid: txRef } 
     });
     
     if (!transaction) {
@@ -72,24 +72,24 @@ router.post('/flutterwave', async (req, res) => {
       console.error(`Webhook: Verified payment not successful: ${flwTxId}, status=${verifiedData.status}`);
       await prisma.transaction.update({
         where: { id: transaction.id },
-        data: { status: 'failed', flutterwaveRef: flwTxId }
+        data: { status: 'failed', flutterwaveref: flwTxId }
       });
       return res.json({ status: 'ok' });
     }
 
     const verifiedAmount = parseFloat(verifiedData.amount);
-    const expectedAmount = transaction.totalAmount;
+    const expectedAmount = transaction.totalamount;
 
     if (Math.abs(verifiedAmount - expectedAmount) > 0.01) {
       console.error(`Webhook: Amount mismatch! Expected=${expectedAmount}, Got=${verifiedAmount}`);
       return res.status(400).json({ message: 'Amount mismatch' });
     }
 
-    console.log(`Webhook: Payment verified! Sending ${transaction.axcnhAmount} AxCNH to ${transaction.walletAddress}`);
+    console.log(`Webhook: Payment verified! Sending ${transaction.axcnhamount} AxCNH to ${transaction.walletaddress}`);
     
-    const txHash = await confluxService.withdrawFromVault(
-      transaction.walletAddress, 
-      transaction.axcnhAmount, 
+    const txhash = await confluxService.withdrawFromVault(
+      transaction.walletaddress, 
+      transaction.axcnhamount, 
       'AxCNH'
     );
     
@@ -97,33 +97,33 @@ router.post('/flutterwave', async (req, res) => {
       where: { id: transaction.id },
       data: {
         status: 'completed',
-        flutterwaveRef: flwTxId,
-        txHash,
-        completedAt: new Date(),
+        flutterwaveref: flwTxId,
+        txhash,
+        completedat: new Date(),
       },
     });
 
-    if (transaction.userId) {
+    if (transaction.userid) {
       await prisma.user.update({
-        where: { id: transaction.userId },
+        where: { id: transaction.userid },
         data: {
-          dailyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
-          monthlyVolume: { increment: transaction.usdAmount || transaction.axcnhAmount },
+          dailyvolume: { increment: transaction.usdamount || transaction.axcnhamount },
+          monthlyvolume: { increment: transaction.usdamount || transaction.axcnhamount },
         },
       });
     }
 
-    if (transaction.merchantId) {
+    if (transaction.merchantid) {
       await prisma.merchant.update({
-        where: { id: transaction.merchantId },
+        where: { id: transaction.merchantid },
         data: {
-          dailyVolume: { increment: transaction.axcnhAmount },
-          monthlyVolume: { increment: transaction.axcnhAmount },
+          dailyvolume: { increment: transaction.axcnhamount },
+          monthlyvolume: { increment: transaction.axcnhamount },
         },
       });
     }
 
-    console.log(`Webhook: SUCCESS! txHash=${txHash} for txRef=${txRef}`);
+    console.log(`Webhook: SUCCESS! txhash=${txhash} for txRef=${txRef}`);
     res.json({ status: 'ok' });
     
   } catch (error) {
@@ -141,7 +141,7 @@ router.get('/reconcile', async (req, res) => {
     const stuckTransactions = await prisma.transaction.findMany({
       where: {
         status: 'pending',
-        createdAt: { lt: threshold },
+        createdat: { lt: threshold },
       },
     });
 
@@ -150,21 +150,21 @@ router.get('/reconcile', async (req, res) => {
     const results = await Promise.allSettled(
       stuckTransactions.map(async (tx) => {
         try {
-          if (tx.flutterwaveRef) {
-            console.log(`Reconcile: Checking ${tx.transactionId} (FLW ref: ${tx.flutterwaveRef})`);
+          if (tx.flutterwaveref) {
+            console.log(`Reconcile: Checking ${tx.transactionid} (FLW ref: ${tx.flutterwaveref})`);
             
-            const verified = await flutterwaveService.verifyTransaction(tx.flutterwaveRef);
+            const verified = await flutterwaveService.verifyTransaction(tx.flutterwaveref);
             
             if (verified.status === 'success' && verified.data?.status === 'successful') {
               const verifiedAmount = parseFloat(verified.data.amount);
-              const expectedAmount = tx.totalAmount;
+              const expectedAmount = tx.totalamount;
               
               if (Math.abs(verifiedAmount - expectedAmount) <= 0.01) {
-                console.log(`Reconcile: Completing stuck transaction: ${tx.transactionId}`);
+                console.log(`Reconcile: Completing stuck transaction: ${tx.transactionid}`);
                 
-                const txHash = await confluxService.withdrawFromVault(
-                  tx.walletAddress,
-                  tx.axcnhAmount,
+                const txhash = await confluxService.withdrawFromVault(
+                  tx.walletaddress,
+                  tx.axcnhamount,
                   'AxCNH'
                 );
                 
@@ -172,12 +172,12 @@ router.get('/reconcile', async (req, res) => {
                   where: { id: tx.id },
                   data: {
                     status: 'completed',
-                    txHash,
-                    completedAt: new Date(),
+                    txhash,
+                    completedat: new Date(),
                   },
                 });
                 
-                return { transactionId: tx.transactionId, status: 'completed' };
+                return { transactionid: tx.transactionid, status: 'completed' };
               }
             }
             
@@ -186,14 +186,14 @@ router.get('/reconcile', async (req, res) => {
                 where: { id: tx.id },
                 data: { status: 'failed' },
               });
-              return { transactionId: tx.transactionId, status: 'failed' };
+              return { transactionid: tx.transactionid, status: 'failed' };
             }
           }
           
-          return { transactionId: tx.transactionId, status: 'pending' };
+          return { transactionid: tx.transactionid, status: 'pending' };
         } catch (error) {
-          console.error(`Reconcile error for ${tx.transactionId}:`, error);
-          return { transactionId: tx.transactionId, status: 'error', error: String(error) };
+          console.error(`Reconcile error for ${tx.transactionid}:`, error);
+          return { transactionid: tx.transactionid, status: 'error', error: String(error) };
         }
       })
     );
