@@ -9,6 +9,7 @@ export default function HomePage() {
       <Navbar />
       <section className="hero">
         <div className="hero-content">
+          <img src="/axpesa.jpg" alt="AxPesa Logo" className="hero-logo" />
           <h1>
             African Finance,
             <br />
@@ -24,7 +25,7 @@ export default function HomePage() {
               Sign Up
             </Link>
             <Link to="/login" className="btn btn-outline">
-              Login{" "}
+              Login
             </Link>
           </div>
         </div>

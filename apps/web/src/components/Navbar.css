@@ -46,6 +46,12 @@
   text-decoration: none;
 }
 
+.logo-img {
+  height: 40px;
+  width: auto;
+  border-radius: 8px;
+}
+
 .navbar-right {
   display: flex;
   align-items: center;

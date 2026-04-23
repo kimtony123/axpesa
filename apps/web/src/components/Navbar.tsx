@@ -38,7 +38,9 @@ export default function Navbar() {
             <ArrowLeft size={20} />
           </button>
         )}
-        <Link to="/" className="logo">AxPesa</Link>
+        <Link to="/" className="logo">
+          <img src="/axpesa.jpg" alt="AxPesa" className="logo-img" />
+        </Link>
         
         <div className="navbar-right">
           <button 
