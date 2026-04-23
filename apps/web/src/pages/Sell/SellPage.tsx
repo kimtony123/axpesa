@@ -36,8 +36,8 @@ export default function SellPage() {
   }, [address]);
 
   useEffect(() => {
-    api.offramp.getRate('KES')
-      .then(d => d.success && d.data?.rate && setRates({ KES: d.data.rate }))
+    api.offramp.getRates()
+      .then(d => d.success && d.data?.rates?.KES && setRates({ KES: d.data.rates.KES }))
       .catch(() => {});
   }, []);
 

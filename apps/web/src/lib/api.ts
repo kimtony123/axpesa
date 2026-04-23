@@ -93,7 +93,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(params),
     }),
-    getRate: (currency: string) => fetchApi(`/api/offramp/rate/${currency}`),
+    getRates: () => fetchApi('/api/offramp/rates'),
     getHistory: (address: string) => fetchApi(`/api/offramp/history?address=${address}`),
   },
   

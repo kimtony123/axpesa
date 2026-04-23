@@ -26,12 +26,20 @@ export default function Navbar() {
     navigate('/');
   };
 
+  const handleBack = () => {
+    try {
+      navigate(-1);
+    } catch {
+      navigate('/dashboard');
+    }
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar-content">
         {showBackBtn && (
           <button 
-            onClick={() => navigate(-1)} 
+            onClick={handleBack} 
             className="back-btn"
             title="Go back"
           >

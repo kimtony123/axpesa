@@ -33,7 +33,7 @@ export default function TransferPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!isValid || loading) return;
     setLoading(true);
     setError('');
 
@@ -66,23 +66,30 @@ export default function TransferPage() {
           return;
         }
 
-        setError('Confirming transfer...');
-        const confirmData = await fetchApi('/api/transfer/confirm', {
+        // ON-CHAIN TRANSACTION CONFIRMED - Show success immediately!
+        setError('');
+        setLoading(false);
+        alert(`Transfer of ${amount} AxCNH completed!\nTx: ${txHash.slice(0, 10)}...`);
+        setRecipient('');
+        setAmount('');
+        
+        // Refresh balance
+        fetchApi(`/api/wallet/balances?address=${address}`)
+          .then(d => d.success && d.data?.AxCNH && setBalance(d.data.AxCNH))
+          .catch(() => {});
+        
+        // Fire-and-forget the API confirmation - don't await
+        // Even if it fails, the on-chain transfer already succeeded
+        fetchApi('/api/transfer/confirm', {
           method: 'POST',
           body: JSON.stringify({ 
             recipient,
             amount: transferAmount,
             txhash: txHash,
           }),
-        });
+        }).catch(err => console.error('Transfer confirm API failed (non-critical):', err));
         
-        if (confirmData.success) {
-          alert(`Transfer of ${amount} AxCNH completed!`);
-          setRecipient('');
-          setAmount('');
-        } else {
-          setError(confirmData.error?.message || 'Transfer failed');
-        }
+        return;
       } catch (metaMaskErr: any) {
         console.error('MetaMask error:', metaMaskErr);
         if (metaMaskErr.code === 4001) {
@@ -93,7 +100,7 @@ export default function TransferPage() {
       }
     } catch (err: any) {
       console.error('Transfer error:', err);
-      setError(err.message || 'Network error. Please try again.');
+      setError(err?.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }

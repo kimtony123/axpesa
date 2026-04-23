@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Wallet, UserPlus } from 'lucide-react';
 import Navbar from '../../components/Navbar';
@@ -11,9 +11,16 @@ import './LoginPage.css';
 export default function LoginPage() {
   const [error, setError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
-  const { setWallet } = useWalletStore();
+  const { address, isConnected, setWallet } = useWalletStore();
   const navigate = useNavigate();
   const hasMetamask = isMetaMaskInstalled();
+
+  useEffect(() => {
+    const token = localStorage.getItem('axpesa_token');
+    if (isConnected && address && token) {
+      navigate('/dashboard');
+    }
+  }, [isConnected, address, navigate]);
 
   const handleConnectMetaMask = async () => {
     setError('');

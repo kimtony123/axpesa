@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Wallet } from 'lucide-react';
 import Navbar from '../../components/Navbar';
@@ -10,12 +10,19 @@ import './RegisterPage.css';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { setWallet } = useWalletStore();
+  const { address, isConnected, setWallet } = useWalletStore();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const hasMetamask = isMetaMaskInstalled();
+
+  useEffect(() => {
+    const token = localStorage.getItem('axpesa_token');
+    if (isConnected && address && token) {
+      navigate('/dashboard');
+    }
+  }, [isConnected, address, navigate]);
 
   const handleConnectAndRegister = async () => {
     if (!name || !phone) {
